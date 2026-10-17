@@ -73,7 +73,7 @@ Pipeline status flow driven by these stories:
 - [x] Step 4: Services — `@Transactional`, domain exceptions, audit entries
 - [x] Step 5: Controllers — `@RestController`, `@PreAuthorize`, `@Valid`, `ApiResponse<T>` envelope
 - [x] Step 6: Tests — 8 controller test classes (201/400/401/403/404/409, trace headers), 1 end-to-end pipeline test with the real DB, 3 unit test classes
-- [x] Step 7: Postman collections `postman/School_ERP_US-02002 … US-02010.postman_collection.json` (v2.1, positive + negative, `pm.test` assertions, ID capture)
+- [x] Step 7: Single service collection `postman/School_ERP_AdmissionService.postman_collection.json` with one folder per story, US-02001 … US-02010 (v2.1, positive + negative, `pm.test` assertions, ID capture chaining the folders)
 - [x] Step 8: Wiki pages `wiki/api-docs/US-02002 … US-02010-*-api.md` (business rules, schemas, error dictionary, Mermaid sequence)
 
 New configuration (`application.yml`): `admission.document-vault.*`, `admission.payment.link-base-url`, `admission.reminders.auto-dispatch.*`, multipart limit 5 MB.
@@ -104,7 +104,7 @@ Result: **86 tests, 0 failures, 0 errors, 0 skipped** (includes the existing 11 
 | MeritRankingCalculatorTest / LeadConversionAnalyticsServiceTest / DocumentVaultStorageTest | 5 / 2 / 4 |
 | AdmissionEnquiryControllerIntegrationTest (existing US-02001) | 11 |
 
-Postman collections were validated as JSON but **not executed** against a running service.
+The Postman collection was validated as JSON (every `{{variable}}` is defined) but **not executed** against a running service.
 
 ## 6. Known Gaps / Follow-ups
 
