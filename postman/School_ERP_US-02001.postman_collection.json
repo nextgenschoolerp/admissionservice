@@ -1,0 +1,213 @@
+{
+  "info": {
+    "_postman_id": "us-02001-admission-enquiry",
+    "name": "School_ERP_US-02001 - Capture Walk-in Inquiry Lead",
+    "description": "Postman collection for US-02001: Capture walk-in inquiry lead details directly into the CRM database.\nActor: Front-Office Counselor\nModule: Admission Management & Lead CRM",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8083",
+      "type": "string"
+    },
+    {
+      "key": "tenantId",
+      "value": "tenant-001",
+      "type": "string"
+    },
+    {
+      "key": "branchId",
+      "value": "branch-001",
+      "type": "string"
+    },
+    {
+      "key": "counselorToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT Bearer token with ROLE_FRONT_OFFICE_COUNSELOR"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT Bearer token with ROLE_SUPER_ADMIN"
+    },
+    {
+      "key": "teacherToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT Bearer token with ROLE_TEACHER (for forbidden test)"
+    }
+  ],
+  "item": [
+    {
+      "name": "Happy Path - Capture Walk-in Enquiry (201 Created)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{counselorToken}}" },
+          { "key": "X-Trace-Id", "value": "postman-trace-02001-001" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tenantId\": \"{{tenantId}}\",\n  \"branchId\": \"{{branchId}}\",\n  \"candidateFirstName\": \"Rohan\",\n  \"candidateLastName\": \"Mehta\",\n  \"targetGradeId\": \"grade-10-uuid\",\n  \"academicYearId\": \"ay-2026-uuid\",\n  \"guardianName\": \"Sanjay Mehta\",\n  \"guardianEmail\": \"sanjay.mehta@example.com\",\n  \"guardianPhone\": \"+919876543210\",\n  \"referralSource\": \"WALK_IN\",\n  \"remarks\": \"Walk-in inquiry for Grade 10 admission\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admissions/enquiries",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "admissions", "enquiries"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 201 Created', function() {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "pm.test('Response envelope is success', function() {",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  pm.expect(json.data.applicationNumber).to.be.a('string');",
+              "  pm.expect(json.data.enquiryStatus).to.eql('NEW_INQUIRY');",
+              "  pm.expect(json.data.candidateFirstName).to.eql('Rohan');",
+              "});",
+              "pm.test('X-Trace-Id header present', function() {",
+              "  pm.response.to.have.header('X-Trace-Id');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Validation Error - Missing Required Fields (400 Bad Request)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{counselorToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tenantId\": \"\",\n  \"branchId\": \"\",\n  \"candidateFirstName\": \"\",\n  \"candidateLastName\": \"\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admissions/enquiries",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "admissions", "enquiries"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 400 Bad Request', function() {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "pm.test('Response is error envelope', function() {",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.be.false;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Unauthenticated - No Token (401 Unauthorized)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tenantId\": \"{{tenantId}}\",\n  \"branchId\": \"{{branchId}}\",\n  \"candidateFirstName\": \"Test\",\n  \"candidateLastName\": \"User\",\n  \"targetGradeId\": \"grade-1\",\n  \"academicYearId\": \"ay-2026\",\n  \"guardianName\": \"Guardian\",\n  \"guardianEmail\": \"guardian@example.com\",\n  \"guardianPhone\": \"+911234567890\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admissions/enquiries",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "admissions", "enquiries"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 401 Unauthorized', function() {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Forbidden - Teacher Role (403 Forbidden)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{teacherToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tenantId\": \"{{tenantId}}\",\n  \"branchId\": \"{{branchId}}\",\n  \"candidateFirstName\": \"Test\",\n  \"candidateLastName\": \"User\",\n  \"targetGradeId\": \"grade-1\",\n  \"academicYearId\": \"ay-2026\",\n  \"guardianName\": \"Guardian\",\n  \"guardianEmail\": \"guardian2@example.com\",\n  \"guardianPhone\": \"+911234567891\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admissions/enquiries",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "admissions", "enquiries"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 403 Forbidden', function() {",
+              "  pm.response.to.have.status(403);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Not Found - Get Non-existent Enquiry (404 Not Found)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{counselorToken}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admissions/enquiries/00000000-0000-0000-0000-000000000000",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "admissions", "enquiries", "00000000-0000-0000-0000-000000000000"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 404 Not Found', function() {",
+              "  pm.response.to.have.status(404);",
+              "});",
+              "pm.test('Error code is NOT_FOUND', function() {",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.be.false;",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

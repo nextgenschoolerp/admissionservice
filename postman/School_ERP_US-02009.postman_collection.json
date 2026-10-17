@@ -1,0 +1,241 @@
+{
+  "info": {
+    "_postman_id": "us-02009-whatsapp-exam-reminders",
+    "name": "School_ERP_US-02009 - WhatsApp Reminders for Entrance Evaluations",
+    "description": "Postman collection for US-02009: Dispatch automated WhatsApp reminders for upcoming entrance evaluations.\nActor: Front-Office Counselor\nModule: Admission Management & Lead CRM\n\nSetup: run the admissionservice (default port 8083) and fill the token variables with JWTs issued by authservice for the listed roles. Requests that need an existing enquiry use {{enquiryId}}; IDs created by positive requests are captured automatically.\nSide effects: positive POST/PATCH requests create or change data.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8083",
+      "type": "string"
+    },
+    {
+      "key": "tenantId",
+      "value": "tenant-001",
+      "type": "string"
+    },
+    {
+      "key": "branchId",
+      "value": "branch-001",
+      "type": "string"
+    },
+    {
+      "key": "enquiryId",
+      "value": "",
+      "type": "string",
+      "description": "UUID of an existing enquiry (create one with the US-02001 collection)"
+    },
+    {
+      "key": "counselorToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT Bearer token with ROLE_FRONT_OFFICE_COUNSELOR"
+    },
+    {
+      "key": "forbiddenToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT Bearer token with JWT with ROLE_MARKETING_MANAGER (not permitted)"
+    }
+  ],
+  "item": [
+    {
+      "name": "Dispatch reminders now - Positive (200)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{counselorToken}}"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "postman-us-02009-001"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admissions/reminders/entrance-evaluations",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "admissions",
+            "reminders",
+            "entrance-evaluations"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tenantId\": \"{{tenantId}}\",\n  \"branchId\": \"{{branchId}}\",\n  \"lookaheadHours\": 48\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Response envelope', function () {",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(true);",
+              "});",
+              "pm.test('X-Trace-Id header present', function () {",
+              "  pm.response.to.have.header('X-Trace-Id');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dispatch reminders now - Negative - validation (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{counselorToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admissions/reminders/entrance-evaluations",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "admissions",
+            "reminders",
+            "entrance-evaluations"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tenantId\": \"{{tenantId}}\",\n  \"branchId\": \"{{branchId}}\",\n  \"lookaheadHours\": 500\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "pm.test('Response envelope', function () {",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(false);",
+              "  pm.expect(json.errorCode).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dispatch reminders now - Negative - unauthenticated (401)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admissions/reminders/entrance-evaluations",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "admissions",
+            "reminders",
+            "entrance-evaluations"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tenantId\": \"{{tenantId}}\",\n  \"branchId\": \"{{branchId}}\",\n  \"lookaheadHours\": 48\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 401', function () {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dispatch reminders now - Negative - forbidden role MARKETING_MANAGER (403)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{forbiddenToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admissions/reminders/entrance-evaluations",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "admissions",
+            "reminders",
+            "entrance-evaluations"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tenantId\": \"{{tenantId}}\",\n  \"branchId\": \"{{branchId}}\",\n  \"lookaheadHours\": 48\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 403', function () {",
+              "  pm.response.to.have.status(403);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

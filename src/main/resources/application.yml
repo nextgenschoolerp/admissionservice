@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: admissionservice
+  datasource:
+    url: jdbc:postgresql://localhost:5432/authservice
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 1
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
+server:
+  port: ${SERVER_PORT:8083}
+
+admission:
+  # US-02004: applicant document vault (PDF/JPEG/PNG, max 5 MB)
+  document-vault:
+    base-path: ${DOCUMENT_VAULT_PATH:./document-vault}
+    max-file-size-bytes: 5242880
+  # US-02006: base URL of the online fee payment page embedded in offer letters
+  payment:
+    link-base-url: ${PAYMENT_LINK_BASE_URL:https://pay.kvs.local/admissions/offers}
+  # US-02009: automatic WhatsApp reminders for upcoming entrance evaluations
+  reminders:
+    auto-dispatch:
+      enabled: ${REMINDER_AUTO_DISPATCH_ENABLED:false}
+      cron: "0 0 * * * *"
+      lookahead-hours: 24
+
+jwt:
+  secret: ${JWT_SECRET:5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437}
+  expiration: ${JWT_EXPIRATION:1800000}
+
+management:
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0
+    propagation:
+      consume: [w3c, b3]
+      produce: [w3c, b3]
+
+logging:
+  level:
+    root: info
+    com.kvs: debug
+    com.kvs.core.logging.RequestAndRepositoryLoggingAspect: debug
+    org.springframework.security: debug

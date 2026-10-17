@@ -1,0 +1,388 @@
+{
+  "info": {
+    "_postman_id": "us-02006-admission-offer",
+    "name": "School_ERP_US-02006 - Offer Letters with Embedded Fee Payment Links",
+    "description": "Postman collection for US-02006: Issue automated offer letters with embedded online fee payment links.\nActor: Finance Cashier\nModule: Admission Management & Lead CRM\n\nSetup: run the admissionservice (default port 8083) and fill the token variables with JWTs issued by authservice for the listed roles. Requests that need an existing enquiry use {{enquiryId}}; IDs created by positive requests are captured automatically.\nSide effects: positive POST/PATCH requests create or change data.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8083",
+      "type": "string"
+    },
+    {
+      "key": "tenantId",
+      "value": "tenant-001",
+      "type": "string"
+    },
+    {
+      "key": "branchId",
+      "value": "branch-001",
+      "type": "string"
+    },
+    {
+      "key": "enquiryId",
+      "value": "",
+      "type": "string",
+      "description": "UUID of an existing enquiry (create one with the US-02001 collection)"
+    },
+    {
+      "key": "offerId",
+      "value": "",
+      "type": "string",
+      "description": "Captured automatically by the positive request"
+    },
+    {
+      "key": "cashierToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT Bearer token with ROLE_FINANCE_CASHIER"
+    },
+    {
+      "key": "forbiddenToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT Bearer token with JWT with ROLE_FRONT_OFFICE_COUNSELOR (not permitted)"
+    }
+  ],
+  "item": [
+    {
+      "name": "Issue offer letter with payment link - Positive (201)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{cashierToken}}"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "postman-us-02006-001"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admissions/offers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "admissions",
+            "offers"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"enquiryId\": \"{{enquiryId}}\",\n  \"validUntilDate\": \"2026-12-31\",\n  \"initialFeeAmount\": 15000.0\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "pm.test('Response envelope', function () {",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(true);",
+              "});",
+              "pm.test('X-Trace-Id header present', function () {",
+              "  pm.response.to.have.header('X-Trace-Id');",
+              "});",
+              "if (pm.response.code === 201) {",
+              "  pm.collectionVariables.set('offerId', pm.response.json().data.offerId);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get offer - Positive (200)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{cashierToken}}"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "postman-us-02006-002"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admissions/offers/{{offerId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "admissions",
+            "offers",
+            "{{offerId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Response envelope', function () {",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(true);",
+              "});",
+              "pm.test('X-Trace-Id header present', function () {",
+              "  pm.response.to.have.header('X-Trace-Id');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "List offers of an enquiry - Positive (200)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{cashierToken}}"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "postman-us-02006-003"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admissions/enquiries/{{enquiryId}}/offers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "admissions",
+            "enquiries",
+            "{{enquiryId}}",
+            "offers"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Response envelope', function () {",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(true);",
+              "});",
+              "pm.test('X-Trace-Id header present', function () {",
+              "  pm.response.to.have.header('X-Trace-Id');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Issue offer letter with payment link - Negative - validation (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{cashierToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admissions/offers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "admissions",
+            "offers"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"enquiryId\": \"{{enquiryId}}\",\n  \"validUntilDate\": \"2020-01-01\",\n  \"initialFeeAmount\": 0\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "pm.test('Response envelope', function () {",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(false);",
+              "  pm.expect(json.errorCode).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Issue offer letter with payment link - Negative - unauthenticated (401)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admissions/offers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "admissions",
+            "offers"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"enquiryId\": \"{{enquiryId}}\",\n  \"validUntilDate\": \"2026-12-31\",\n  \"initialFeeAmount\": 15000.0\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 401', function () {",
+              "  pm.response.to.have.status(401);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Issue offer letter with payment link - Negative - forbidden role FRONT_OFFICE_COUNSELOR (403)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{forbiddenToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admissions/offers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "admissions",
+            "offers"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"enquiryId\": \"{{enquiryId}}\",\n  \"validUntilDate\": \"2026-12-31\",\n  \"initialFeeAmount\": 15000.0\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 403', function () {",
+              "  pm.response.to.have.status(403);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Not found (404)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{cashierToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admissions/offers/00000000-0000-0000-0000-000000000000",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "admissions",
+            "offers",
+            "00000000-0000-0000-0000-000000000000"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 404', function () {",
+              "  pm.response.to.have.status(404);",
+              "});",
+              "pm.test('Response envelope', function () {",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(false);",
+              "  pm.expect(json.errorCode).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
