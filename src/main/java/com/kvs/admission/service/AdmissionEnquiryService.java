@@ -115,7 +115,12 @@ public class AdmissionEnquiryService {
         enquiry.setCampaignCode(request.getCampaignCode() != null && !request.getCampaignCode().isBlank()
                 ? request.getCampaignCode() : null);
         enquiry.setEnquiryStatus("NEW_INQUIRY");
-        enquiry.setAssignedCounselorId(request.getAssignedCounselorId());
+        // A counselor who records the enquiry owns it unless another counselor is named
+        String counselor = request.getAssignedCounselorId();
+        if ((counselor == null || counselor.isBlank()) && accessGuard.isCounselor()) {
+            counselor = accessGuard.currentUserEmail().orElse(null);
+        }
+        enquiry.setAssignedCounselorId(counselor);
         enquiry.setRemarks(request.getRemarks());
 
         AdmissionEnquiry saved = admissionEnquiryRepository.save(enquiry);
