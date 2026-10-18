@@ -164,6 +164,27 @@ public class MeritListService {
         return mapToResponse(meritList);
     }
 
+    /**
+     * Renders a merit list as a noticeboard PDF and records the export in the audit trail.
+     * US-02012, US-02032, US-02052, US-02072, US-02092: Export merit list rankings to PDF for public noticeboard display
+     *
+     * @param meritListId the merit list UUID
+     * @param fullNames   print full candidate names instead of "First L."
+     * @return the PDF bytes and a suggested file name
+     */
+    @Transactional
+    public PdfExport exportPdf(UUID meritListId, boolean fullNames) {
+        MeritListResponse list = getMeritList(meritListId);
+        byte[] pdf = MeritListPdfRenderer.render(list, fullNames);
+        auditService.logSuccess("merit_list:" + list.getTenantId(), "EXPORT_MERIT_LIST_PDF",
+                "Exported " + list.getMeritListCode() + " (" + list.getEntries().size() + " candidates, "
+                        + (fullNames ? "full names" : "masked names") + ", " + pdf.length + " bytes)");
+        return new PdfExport(list.getMeritListCode() + ".pdf", pdf);
+    }
+
+    public record PdfExport(String fileName, byte[] content) {
+    }
+
     private MeritListResponse mapToResponse(MeritList list) {
         List<MeritListEntryResponse> entries = list.getEntries().stream()
                 .sorted(Comparator.comparing(MeritListEntry::getMeritRank))

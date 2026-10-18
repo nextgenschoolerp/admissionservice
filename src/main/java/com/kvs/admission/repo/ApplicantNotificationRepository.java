@@ -23,4 +23,12 @@ public interface ApplicantNotificationRepository extends JpaRepository<Applicant
                                       @Param("status") NotificationStatus status);
 
     List<ApplicantNotification> findByEnquiryIdOrderByDispatchedAtDesc(UUID enquiryId);
+
+    /** Offers (from the given set) that already received a successful notification of this type (US-02018). */
+    @Query("select distinct n.offerId from ApplicantNotification n where n.offerId in :offerIds "
+            + "and n.notificationType = :type and n.channel = :channel and n.status = :status")
+    List<UUID> findNotifiedOffers(@Param("offerIds") Collection<UUID> offerIds,
+                                  @Param("type") NotificationType type,
+                                  @Param("channel") NotificationChannel channel,
+                                  @Param("status") NotificationStatus status);
 }

@@ -21,6 +21,18 @@ public interface AdmissionEnquiryRepository extends JpaRepository<AdmissionEnqui
 
     List<AdmissionEnquiry> findByTenantIdAndBranchId(String tenantId, String branchId);
 
+    List<AdmissionEnquiry> findByTenantIdAndBranchIdAndArchivedAtIsNull(String tenantId, String branchId);
+
+    List<AdmissionEnquiry> findByTenantIdAndBranchIdAndAcademicYearIdAndTargetGradeIdAndEnquiryStatusInAndArchivedAtIsNull(
+            String tenantId, String branchId, String academicYearId, String targetGradeId, Collection<String> statuses);
+
+    List<AdmissionEnquiry> findByTenantIdAndEnquiryStatusInAndArchivedAtIsNull(String tenantId, Collection<String> statuses);
+
+    List<AdmissionEnquiry> findByTenantIdAndBranchIdAndEnquiryStatusInAndArchivedAtIsNull(
+            String tenantId, String branchId, Collection<String> statuses);
+
+    List<AdmissionEnquiry> findByTenantIdAndCampaignCodeIn(String tenantId, Collection<String> campaignCodes);
+
     List<AdmissionEnquiry> findByTenantIdAndBranchIdAndEnquiryStatus(String tenantId, String branchId, String enquiryStatus);
 
     List<AdmissionEnquiry> findByTenantIdAndBranchIdAndAcademicYearIdAndTargetGradeId(

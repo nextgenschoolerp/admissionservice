@@ -75,7 +75,7 @@ class AdmissionEnquiryControllerIntegrationTest {
                 "Rohan", "Mehta",
                 "grade-10-id", "ay-2026-id",
                 "Sanjay Mehta", "sanjay.m@example.com", "+919876543210",
-                "WALK_IN", null, "Walk-in inquiry for Grade 10"
+                "WALK_IN", null, "Walk-in inquiry for Grade 10", null
         );
 
         AdmissionEnquiryResponse response = AdmissionEnquiryResponse.builder()
@@ -125,7 +125,7 @@ class AdmissionEnquiryControllerIntegrationTest {
                 "Priya", "Sharma",
                 "grade-8-id", "ay-2026-id",
                 "Rajesh Sharma", "rajesh.s@example.com", "+919876500000",
-                "PHONE", null, null
+                "PHONE", null, null, null
         );
 
         AdmissionEnquiryResponse response = AdmissionEnquiryResponse.builder()
@@ -177,7 +177,7 @@ class AdmissionEnquiryControllerIntegrationTest {
                 "Rohan", "Mehta",
                 "grade-10-id", "ay-2026-id",
                 "Sanjay Mehta", "not-an-email", "+919876543210",
-                "WALK_IN", null, null
+                "WALK_IN", null, null, null
         );
 
         mockMvc.perform(post("/api/v1/admissions/enquiries")
@@ -196,7 +196,7 @@ class AdmissionEnquiryControllerIntegrationTest {
                 "Rohan", "Mehta",
                 "grade-10-id", "ay-2026-id",
                 "Sanjay Mehta", "sanjay@example.com", "abc-invalid",
-                "WALK_IN", null, null
+                "WALK_IN", null, null, null
         );
 
         mockMvc.perform(post("/api/v1/admissions/enquiries")
@@ -217,7 +217,7 @@ class AdmissionEnquiryControllerIntegrationTest {
                 "Rohan", "Mehta",
                 "grade-10-id", "ay-2026-id",
                 "Sanjay Mehta", "sanjay@example.com", "+919876543210",
-                "WALK_IN", null, null
+                "WALK_IN", null, null, null
         );
 
         mockMvc.perform(post("/api/v1/admissions/enquiries")
@@ -236,7 +236,7 @@ class AdmissionEnquiryControllerIntegrationTest {
                 "Rohan", "Mehta",
                 "grade-10-id", "ay-2026-id",
                 "Sanjay Mehta", "sanjay@example.com", "+919876543210",
-                "WALK_IN", null, null
+                "WALK_IN", null, null, null
         );
 
         mockMvc.perform(post("/api/v1/admissions/enquiries")
@@ -256,7 +256,7 @@ class AdmissionEnquiryControllerIntegrationTest {
                 "Rohan", "Mehta",
                 "grade-10-id", "ay-2026-id",
                 "Sanjay Mehta", "sanjay@example.com", "+919876543210",
-                "WALK_IN", null, null
+                "WALK_IN", null, null, null
         );
 
         when(admissionEnquiryService.captureWalkInEnquiry(any(CaptureEnquiryRequest.class)))

@@ -4,8 +4,12 @@ import com.kvs.admission.dto.AdmissionEnquiryResponse;
 import com.kvs.admission.dto.CaptureEnquiryRequest;
 import com.kvs.admission.entity.AdmissionEnquiry;
 import com.kvs.admission.entity.AuditLog;
+import com.kvs.admission.entity.MarketingCampaign;
+import com.kvs.admission.enums.CampaignStatus;
 import com.kvs.admission.repo.AdmissionEnquiryRepository;
 import com.kvs.admission.repo.AuditLogRepository;
+import com.kvs.admission.repo.MarketingCampaignRepository;
+import com.kvs.core.exception.BadRequestException;
 import com.kvs.core.exception.ConflictException;
 import com.kvs.core.exception.ResourceNotFoundException;
 import com.kvs.core.util.SecurityUtils;
@@ -25,7 +29,7 @@ import java.util.stream.Collectors;
  * Service for managing admission enquiry leads.
  * Covers user story:
  * US-02001: Capture walk-in inquiry lead details directly into the CRM database
- * Actor: Front-Office Counselor
+ * Actor: Front-Office Counselor (also Applicant Parent for self-service enquiries: US-02021, US-02061)
  */
 @Service
 @Slf4j
@@ -40,6 +44,12 @@ public class AdmissionEnquiryService {
     @Autowired(required = false)
     private HttpServletRequest httpRequest;
 
+    @Autowired
+    private MarketingCampaignRepository campaignRepository;
+
+    @Autowired
+    private AdmissionAccessGuard accessGuard;
+
     /**
      * Captures a walk-in inquiry lead and persists it into the CRM database.
      * Generates a unique application number, validates for duplicate phone/email,
@@ -53,6 +63,21 @@ public class AdmissionEnquiryService {
         log.info("Capturing walk-in enquiry lead for tenant: {}, branch: {}, candidate: {} {}",
                 request.getTenantId(), request.getBranchId(),
                 request.getCandidateFirstName(), request.getCandidateLastName());
+
+        // A parent submitting their own enquiry must register it under their login email
+        boolean selfService = !accessGuard.isStaff();
+        accessGuard.requireStaffOrGuardian(request.getGuardianEmail(),
+                "Parents may only submit enquiries with their own login email as the guardian email");
+
+        if (request.getCampaignCode() != null && !request.getCampaignCode().isBlank()) {
+            MarketingCampaign campaign = campaignRepository
+                    .findByTenantIdAndCampaignCode(request.getTenantId(), request.getCampaignCode())
+                    .orElseThrow(() -> new BadRequestException("Unknown campaign code " + request.getCampaignCode()));
+            if (campaign.getStatus() != CampaignStatus.ACTIVE) {
+                throw new BadRequestException("Campaign " + campaign.getCampaignCode() + " is " + campaign.getStatus()
+                        + " and no longer accepts leads");
+            }
+        }
 
         // Check for duplicate guardian phone within the same tenant
         admissionEnquiryRepository.findByGuardianPhoneAndTenantId(request.getGuardianPhone(), request.getTenantId())
@@ -84,7 +109,11 @@ public class AdmissionEnquiryService {
         enquiry.setGuardianName(request.getGuardianName());
         enquiry.setGuardianEmail(request.getGuardianEmail());
         enquiry.setGuardianPhone(request.getGuardianPhone());
-        enquiry.setReferralSource(request.getReferralSource() != null ? request.getReferralSource() : "WALK_IN");
+        enquiry.setReferralSource(request.getReferralSource() != null
+                ? request.getReferralSource()
+                : (selfService ? "PARENT_PORTAL" : "WALK_IN"));
+        enquiry.setCampaignCode(request.getCampaignCode() != null && !request.getCampaignCode().isBlank()
+                ? request.getCampaignCode() : null);
         enquiry.setEnquiryStatus("NEW_INQUIRY");
         enquiry.setAssignedCounselorId(request.getAssignedCounselorId());
         enquiry.setRemarks(request.getRemarks());
@@ -113,11 +142,12 @@ public class AdmissionEnquiryService {
         log.info("Fetching admission enquiry by enquiryId: {}", enquiryId);
         AdmissionEnquiry enquiry = admissionEnquiryRepository.findByEnquiryId(enquiryId)
                 .orElseThrow(() -> new ResourceNotFoundException("AdmissionEnquiry", "enquiryId", enquiryId));
+        accessGuard.requireStaffOrGuardian(enquiry.getGuardianEmail(), "You may only view your own enquiries");
         return mapToResponse(enquiry);
     }
 
     /**
-     * Lists all enquiries for a given tenant and branch.
+     * Lists the active (not archived) enquiries for a given tenant and branch.
      *
      * @param tenantId the tenant identifier
      * @param branchId the branch identifier
@@ -125,7 +155,7 @@ public class AdmissionEnquiryService {
      */
     public List<AdmissionEnquiryResponse> listEnquiries(String tenantId, String branchId) {
         log.info("Listing enquiries for tenantId: {}, branchId: {}", tenantId, branchId);
-        return admissionEnquiryRepository.findByTenantIdAndBranchId(tenantId, branchId).stream()
+        return admissionEnquiryRepository.findByTenantIdAndBranchIdAndArchivedAtIsNull(tenantId, branchId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -176,6 +206,8 @@ public class AdmissionEnquiryService {
                 .enquiryStatus(entity.getEnquiryStatus())
                 .assignedCounselorId(entity.getAssignedCounselorId())
                 .remarks(entity.getRemarks())
+                .campaignCode(entity.getCampaignCode())
+                .archivedAt(entity.getArchivedAt())
                 .createdAt(entity.getCreatedAt())
                 .build();
     }

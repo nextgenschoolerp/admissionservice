@@ -16,7 +16,7 @@ import java.time.LocalDate;
  * Controller for admission CRM analytics.
  * Covers user story:
  * US-02007: Track lead conversion rates across marketing channels and referral sources
- * Actor: Marketing Manager
+ * Actor: Marketing Manager (US-02047, US-02087); Registrar, read-only (US-02027, US-02067)
  */
 @RestController
 @Slf4j
@@ -36,7 +36,7 @@ public class AdmissionAnalyticsController {
      * @return 200 OK with the conversion report
      */
     @GetMapping("/conversion-rates")
-    @PreAuthorize("hasAnyRole('MARKETING_MANAGER', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('MARKETING_MANAGER', 'REGISTRAR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<ConversionRateReportResponse>> getConversionRates(
             @RequestParam("tenantId") String tenantId,
             @RequestParam(value = "branchId", required = false) String branchId,

@@ -44,6 +44,10 @@ public class ApplicantNotification extends BaseAuditEntity {
     @Column(name = "admit_card_id")
     private UUID admitCardId;
 
+    /** Offer the notification refers to (acceptance notifications, US-02018). */
+    @Column(name = "offer_id")
+    private UUID offerId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "channel", nullable = false, length = 20)
     private NotificationChannel channel;

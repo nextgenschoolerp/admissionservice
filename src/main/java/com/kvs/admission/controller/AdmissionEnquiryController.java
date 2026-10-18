@@ -19,7 +19,7 @@ import java.util.UUID;
  * Controller managing admission enquiry / walk-in lead capture.
  * Covers user story:
  * US-02001: Capture walk-in inquiry lead details directly into the CRM database
- * Actor: Front-Office Counselor
+ * Actor: Front-Office Counselor (US-02041, US-02081); Applicant Parent for their own enquiries (US-02021, US-02061)
  */
 @RestController
 @Slf4j
@@ -36,7 +36,7 @@ public class AdmissionEnquiryController {
      * @return 201 Created with the persisted enquiry details
      */
     @PostMapping
-    @PreAuthorize("hasRole('FRONT_OFFICE_COUNSELOR') or hasRole('ADMISSION_OFFICER') or hasRole('SUPER_ADMIN') or hasAuthority('ROLE_FRONT_OFFICE_COUNSELOR') or hasAuthority('ROLE_ADMISSION_OFFICER') or hasAuthority('ROLE_SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('FRONT_OFFICE_COUNSELOR', 'ADMISSION_OFFICER', 'APPLICANT_PARENT', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<AdmissionEnquiryResponse>> captureEnquiry(
             @Valid @RequestBody CaptureEnquiryRequest request) {
         log.info("Request to capture walk-in enquiry for candidate: {} {}",
@@ -53,7 +53,7 @@ public class AdmissionEnquiryController {
      * @return 200 OK with the enquiry details
      */
     @GetMapping("/{enquiryId}")
-    @PreAuthorize("hasRole('FRONT_OFFICE_COUNSELOR') or hasRole('ADMISSION_OFFICER') or hasRole('SUPER_ADMIN') or hasAuthority('ROLE_FRONT_OFFICE_COUNSELOR') or hasAuthority('ROLE_ADMISSION_OFFICER') or hasAuthority('ROLE_SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('FRONT_OFFICE_COUNSELOR', 'ADMISSION_OFFICER', 'APPLICANT_PARENT', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<AdmissionEnquiryResponse>> getEnquiry(
             @PathVariable("enquiryId") UUID enquiryId) {
         log.info("Request to fetch admission enquiry: {}", enquiryId);
@@ -62,14 +62,14 @@ public class AdmissionEnquiryController {
     }
 
     /**
-     * List all enquiries for a given tenant and branch.
+     * List the active (not archived) enquiries for a given tenant and branch.
      *
      * @param tenantId the tenant identifier
      * @param branchId the branch identifier
      * @return 200 OK with list of enquiries
      */
     @GetMapping
-    @PreAuthorize("hasRole('FRONT_OFFICE_COUNSELOR') or hasRole('ADMISSION_OFFICER') or hasRole('SUPER_ADMIN') or hasAuthority('ROLE_FRONT_OFFICE_COUNSELOR') or hasAuthority('ROLE_ADMISSION_OFFICER') or hasAuthority('ROLE_SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('FRONT_OFFICE_COUNSELOR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<List<AdmissionEnquiryResponse>>> listEnquiries(
             @RequestParam("tenantId") String tenantId,
             @RequestParam("branchId") String branchId) {

@@ -11,4 +11,9 @@ public interface MeritListRepository extends JpaRepository<MeritList, Long> {
 
     @EntityGraph(attributePaths = "entries")
     Optional<MeritList> findByMeritListId(UUID meritListId);
+
+    /** Most recent merit list of a grade, used to prioritise the waitlist (US-02014). */
+    @EntityGraph(attributePaths = "entries")
+    Optional<MeritList> findFirstByTenantIdAndBranchIdAndAcademicYearIdAndTargetGradeIdOrderByCreatedAtDesc(
+            String tenantId, String branchId, String academicYearId, String targetGradeId);
 }

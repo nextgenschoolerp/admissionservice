@@ -33,5 +33,7 @@ public class AdmissionEnquiryResponse {
     private String enquiryStatus;
     private String assignedCounselorId;
     private String remarks;
+    private String campaignCode;
+    private Instant archivedAt;
     private Instant createdAt;
 }

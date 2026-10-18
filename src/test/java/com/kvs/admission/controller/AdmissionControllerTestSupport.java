@@ -56,6 +56,37 @@ abstract class AdmissionControllerTestSupport {
     @MockBean
     protected MeritListService meritListService;
 
+    @MockBean
+    protected AdmissionEnquiryService enquiryService;
+
+    // US-02011 .. US-02020
+    @MockBean
+    protected DocumentFollowUpService followUpService;
+
+    @MockBean
+    protected SectionPlacementService placementService;
+
+    @MockBean
+    protected WaitlistService waitlistService;
+
+    @MockBean
+    protected CounselingCallService callService;
+
+    @MockBean
+    protected FeeWaiverService feeWaiverService;
+
+    @MockBean
+    protected TransferCertificateVerificationService tcVerificationService;
+
+    @MockBean
+    protected AcceptanceNotificationService acceptanceService;
+
+    @MockBean
+    protected MarketingCampaignService campaignService;
+
+    @MockBean
+    protected LeadArchiveService archiveService;
+
     protected String bearer(String role) {
         String user = role.toLowerCase().replace('_', '.') + "@kvs.com";
         return "Bearer " + jwtTokenService.generateToken(user, Map.of("roles", List.of("ROLE_" + role)));

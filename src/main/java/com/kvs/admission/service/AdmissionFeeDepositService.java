@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -44,6 +45,9 @@ public class AdmissionFeeDepositService {
 
     @Autowired
     private AdmissionAuditService auditService;
+
+    @Autowired
+    private FeeWaiverService feeWaiverService;
 
     /**
      * Records the seat reservation deposit for a dispatched, still-valid offer, accepts the offer
@@ -71,9 +75,16 @@ public class AdmissionFeeDepositService {
         if (AdmissionOfferService.isPastValidity(offer)) {
             throw new BadRequestException("Offer " + offer.getOfferCode() + " expired on " + offer.getValidUntilDate());
         }
-        if (request.getAmountPaid().compareTo(offer.getInitialFeeAmount()) != 0) {
+        if (request.getPaymentMode() == PaymentMode.WAIVER) {
+            throw new BadRequestException("WAIVER receipts are issued automatically when a full fee waiver is approved");
+        }
+        // An approved scholarship waiver (US-02016) reduces the amount due
+        BigDecimal payable = feeWaiverService.payableAmount(offer);
+        if (request.getAmountPaid().compareTo(payable) != 0) {
             throw new BadRequestException("Amount paid " + request.getAmountPaid().toPlainString()
-                    + " must equal the seat reservation fee of " + offer.getInitialFeeAmount().toPlainString());
+                    + " must equal the amount due of " + payable.toPlainString()
+                    + (payable.compareTo(offer.getInitialFeeAmount()) != 0
+                    ? " (seat reservation fee " + offer.getInitialFeeAmount().toPlainString() + " less approved waiver)" : ""));
         }
 
         String reference = StringUtils.hasText(request.getTransactionReference())

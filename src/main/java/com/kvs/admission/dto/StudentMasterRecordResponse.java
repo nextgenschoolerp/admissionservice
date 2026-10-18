@@ -34,6 +34,7 @@ public class StudentMasterRecordResponse {
     private String guardianEmail;
     private String guardianPhone;
     private String status;
+    private String sectionCode;
     private String convertedBy;
     private Instant createdAt;
 }

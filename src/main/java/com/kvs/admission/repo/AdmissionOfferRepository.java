@@ -21,4 +21,9 @@ public interface AdmissionOfferRepository extends JpaRepository<AdmissionOffer, 
     Optional<AdmissionOffer> findByOfferIdForUpdate(@Param("offerId") UUID offerId);
 
     List<AdmissionOffer> findByEnquiryIdOrderByCreatedAtDesc(UUID enquiryId);
+
+    List<AdmissionOffer> findByEnquiryIdIn(java.util.Collection<UUID> enquiryIds);
+
+    List<AdmissionOffer> findByTenantIdAndAcademicYearIdAndOfferedGradeIdAndOfferStatusIn(
+            String tenantId, String academicYearId, String offeredGradeId, java.util.Collection<com.kvs.admission.enums.OfferStatus> statuses);
 }

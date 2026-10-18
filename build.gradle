@@ -46,6 +46,8 @@ dependencies {
     implementation 'io.micrometer:micrometer-observation'
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
     implementation 'com.kvs.core:ms-core:1.0.0-SNAPSHOT'
+    // US-02012: merit list PDF export
+    implementation 'org.apache.pdfbox:pdfbox:3.0.3'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

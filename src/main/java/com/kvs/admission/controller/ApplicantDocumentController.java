@@ -22,7 +22,7 @@ import java.util.UUID;
  * Controller for the applicant document vault.
  * Covers user story:
  * US-02004: Upload mandatory birth certificates and transfer records to the document vault
- * Actor: Entrance Exam Evaluator
+ * Actor: Entrance Exam Evaluator (US-02044, US-02084); School Principal (US-02024, US-02064)
  */
 @RestController
 @Slf4j
@@ -41,7 +41,7 @@ public class ApplicantDocumentController {
      * @return 201 Created with stored document metadata
      */
     @PostMapping(value = "/enquiries/{enquiryId}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('ENTRANCE_EXAM_EVALUATOR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('ENTRANCE_EXAM_EVALUATOR', 'SCHOOL_PRINCIPAL', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<ApplicantDocumentResponse>> uploadDocument(
             @PathVariable("enquiryId") UUID enquiryId,
             @RequestParam("documentType") DocumentType documentType,

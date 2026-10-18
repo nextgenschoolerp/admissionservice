@@ -72,6 +72,14 @@ public class AdmissionEnquiry extends BaseAuditEntity {
     @Column(name = "remarks", length = 2000)
     private String remarks;
 
+    /** Marketing campaign that generated the lead (US-02019). */
+    @Column(name = "campaign_code", length = 50)
+    private String campaignCode;
+
+    /** Set when a closed lead is moved to the archive (US-02020); archived leads leave the active pipeline. */
+    @Column(name = "archived_at")
+    private java.time.Instant archivedAt;
+
     @PrePersist
     public void prePersist() {
         if (this.enquiryId == null) {

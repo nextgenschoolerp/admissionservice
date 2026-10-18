@@ -74,6 +74,10 @@ public class StudentMasterRecord extends BaseAuditEntity {
     @Column(name = "status", nullable = false, length = 20)
     private String status = "ACTIVE";
 
+    /** Class section the student is placed in, e.g. "A" (US-02013). */
+    @Column(name = "section_code", length = 10)
+    private String sectionCode;
+
     @Column(name = "converted_by", nullable = false, length = 150)
     private String convertedBy;
 

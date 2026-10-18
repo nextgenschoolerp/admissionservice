@@ -1,5 +1,6 @@
 package com.kvs.admission.enums;
 
 public enum NotificationType {
-    ENTRANCE_EVALUATION_REMINDER
+    ENTRANCE_EVALUATION_REMINDER,
+    ACCEPTANCE_NOTIFICATION
 }

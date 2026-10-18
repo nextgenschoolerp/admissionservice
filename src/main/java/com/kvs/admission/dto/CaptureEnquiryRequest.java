@@ -57,4 +57,8 @@ public class CaptureEnquiryRequest {
 
     @Size(max = 2000, message = "Remarks must not exceed 2000 characters")
     private String remarks;
+
+    /** Optional marketing campaign the lead came from (US-02019); must be an existing campaign of the tenant. */
+    @Size(max = 50, message = "Campaign code must not exceed 50 characters")
+    private String campaignCode;
 }

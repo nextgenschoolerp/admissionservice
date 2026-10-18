@@ -13,7 +13,8 @@ spring:
     enabled: false
   jpa:
     hibernate:
-      ddl-auto: create
+      # update keeps existing rows (seed data in db/seed/module02_admission_seed.sql survives restarts)
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:
@@ -27,6 +28,9 @@ spring:
 
 server:
   port: ${SERVER_PORT:8083}
+  servlet:
+    # All endpoints are served under http://localhost:8083/admissionservice (e.g. /admissionservice/api/v1/admissions/enquiries)
+    context-path: ${SERVER_CONTEXT_PATH:/admissionservice}
 
 admission:
   # US-02004: applicant document vault (PDF/JPEG/PNG, max 5 MB)
@@ -42,6 +46,11 @@ admission:
       enabled: ${REMINDER_AUTO_DISPATCH_ENABLED:false}
       cron: "0 0 * * * *"
       lookahead-hours: 24
+  # US-02014: daily automatic waitlist escalation for grades whose rule enables it
+  waitlist:
+    auto-escalation:
+      enabled: ${WAITLIST_AUTO_ESCALATION_ENABLED:false}
+      cron: "0 30 6 * * *"
 
 jwt:
   secret: ${JWT_SECRET:5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437}

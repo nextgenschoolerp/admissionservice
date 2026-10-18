@@ -4,5 +4,7 @@ public enum PaymentMode {
     UPI,
     CARD,
     NET_BANKING,
-    CASH
+    CASH,
+    /** Fee fully waived under an approved scholarship (US-02016); no money collected. */
+    WAIVER
 }

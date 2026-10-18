@@ -297,7 +297,7 @@ class AdmissionPipelineEndToEndTest {
 
     private UUID captureEnquiry(String token, String first, String last, String email, String phone) throws Exception {
         CaptureEnquiryRequest request = new CaptureEnquiryRequest(tenantId, branchId, first, last, gradeId, yearId,
-                first + " Parent", email, phone, "WALK_IN", null, null);
+                first + " Parent", email, phone, "WALK_IN", null, null, null);
         MvcResult result = perform(post("/api/v1/admissions/enquiries"), token, request)
                 .andExpect(status().isCreated())
                 .andReturn();

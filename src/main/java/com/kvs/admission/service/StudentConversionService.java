@@ -16,7 +16,6 @@ import com.kvs.admission.repo.ApplicantDocumentRepository;
 import com.kvs.admission.repo.StudentMasterRecordRepository;
 import com.kvs.core.exception.BadRequestException;
 import com.kvs.core.exception.ConflictException;
-import com.kvs.core.exception.ForbiddenException;
 import com.kvs.core.exception.ResourceNotFoundException;
 import com.kvs.core.util.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -37,10 +36,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class StudentConversionService {
 
-    /** Staff roles that may act on any lead; any other caller must be the lead's guardian. */
-    private static final Set<String> STAFF_ROLES = Set.of(
-            "ROLE_ADMISSION_OFFICER", "ROLE_REGISTRAR", "ROLE_SUPER_ADMIN");
-
     private static final Set<String> CONVERTIBLE_STATUSES = Set.of(
             EnquiryStatus.EVALUATION_PASSED.name(),
             EnquiryStatus.OFFER_ISSUED.name());
@@ -59,6 +54,9 @@ public class StudentConversionService {
 
     @Autowired
     private AdmissionAuditService auditService;
+
+    @Autowired
+    private AdmissionAccessGuard accessGuard;
 
     /**
      * Converts a verified lead into an active Student Master record and marks the enquiry ENROLLED.
@@ -154,26 +152,14 @@ public class StudentConversionService {
         StudentMasterRecord student = studentRepository.findByStudentId(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("StudentMasterRecord", "studentId", studentId));
         AdmissionEnquiry enquiry = admissionEnquiryRepository.findByEnquiryId(student.getEnquiryId()).orElse(null);
-        if (!isStaff() && !isGuardian(student.getGuardianEmail())) {
-            throw new ForbiddenException("You may only view student records of your own children");
-        }
+        accessGuard.requireStaffOrGuardian(student.getGuardianEmail(),
+                "You may only view student records of your own children");
         return mapToResponse(student, enquiry);
     }
 
     private void assertCallerMayActOn(AdmissionEnquiry enquiry) {
-        if (!isStaff() && !isGuardian(enquiry.getGuardianEmail())) {
-            throw new ForbiddenException("You may only convert admission leads registered under your guardian email");
-        }
-    }
-
-    private boolean isStaff() {
-        return SecurityUtils.getCurrentUserRoles().stream().anyMatch(STAFF_ROLES::contains);
-    }
-
-    private boolean isGuardian(String guardianEmail) {
-        return SecurityUtils.getCurrentUserEmail()
-                .map(email -> email.equalsIgnoreCase(guardianEmail))
-                .orElse(false);
+        accessGuard.requireStaffOrGuardian(enquiry.getGuardianEmail(),
+                "You may only convert admission leads registered under your guardian email");
     }
 
     private StudentMasterRecordResponse mapToResponse(StudentMasterRecord student, AdmissionEnquiry enquiry) {
@@ -194,6 +180,7 @@ public class StudentConversionService {
                 .guardianEmail(student.getGuardianEmail())
                 .guardianPhone(student.getGuardianPhone())
                 .status(student.getStatus())
+                .sectionCode(student.getSectionCode())
                 .convertedBy(student.getConvertedBy())
                 .createdAt(student.getCreatedAt())
                 .build();
