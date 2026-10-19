@@ -63,7 +63,7 @@ class AdmissionUsernameTokenAccessTest {
         Map<String, Object> body = Map.of(
                 "tenantId", tenantId, "branchId", "branch-token", "candidateFirstName", candidateFirstName, "candidateLastName", "Verma",
                 "targetGradeId", "GRADE-06", "academicYearId", "AY-2026-27", "guardianName", "Sanjay Verma",
-                "guardianEmail", email, "guardianPhone", "+91981" + run.replaceAll("\\D", phoneDigit).substring(0, 7));
+                "guardianEmail", email, "guardianPhone", "+9198" + phoneDigit + String.format("%07d", Math.floorMod(run.hashCode(), 10_000_000)));
         String json = mockMvc.perform(post("/api/v1/admissions/enquiries").header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isCreated())

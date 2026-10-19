@@ -26,9 +26,12 @@ public class AdmissionEnquiryResponse {
     private String candidateLastName;
     private String targetGradeId;
     private String academicYearId;
+    private java.time.LocalDate candidateDateOfBirth;
+    private String candidateGender;
     private String guardianName;
     private String guardianEmail;
     private String guardianPhone;
+    private String guardianRelationship;
     private String referralSource;
     private String enquiryStatus;
     private String assignedCounselorId;

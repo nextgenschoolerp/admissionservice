@@ -39,9 +39,9 @@ public class StudentConversionController {
     @PreAuthorize("hasAnyRole('APPLICANT_PARENT', 'FRONT_OFFICE_COUNSELOR', 'ADMISSION_OFFICER', 'REGISTRAR', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<StudentMasterRecordResponse>> convertLead(
             @PathVariable("enquiryId") UUID enquiryId,
-            @Valid @RequestBody ConvertLeadRequest request) {
+            @Valid @RequestBody(required = false) ConvertLeadRequest request) {
         log.info("Request to convert lead {} into a Student Master record", enquiryId);
-        StudentMasterRecordResponse response = conversionService.convertLead(enquiryId, request);
+        StudentMasterRecordResponse response = conversionService.convertLead(enquiryId, request == null ? new ConvertLeadRequest() : request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Lead converted into an active Student Master record", response));
     }

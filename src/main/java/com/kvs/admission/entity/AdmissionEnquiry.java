@@ -51,6 +51,14 @@ public class AdmissionEnquiry extends BaseAuditEntity {
     @Column(name = "academic_year_id", nullable = false, length = 100)
     private String academicYearId;
 
+    /** Candidate's date of birth as given on the application (optional; reused at enrolment) */
+    @Column(name = "candidate_date_of_birth")
+    private java.time.LocalDate candidateDateOfBirth;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "candidate_gender", length = 10)
+    private com.kvs.admission.enums.Gender candidateGender;
+
     @Column(name = "guardian_name", nullable = false, length = 150)
     private String guardianName;
 
@@ -59,6 +67,10 @@ public class AdmissionEnquiry extends BaseAuditEntity {
 
     @Column(name = "guardian_phone", nullable = false, length = 20)
     private String guardianPhone;
+
+    /** How the guardian is related to the candidate, e.g. Mother, Father, Guardian */
+    @Column(name = "guardian_relationship", length = 30)
+    private String guardianRelationship;
 
     @Column(name = "referral_source", length = 50)
     private String referralSource = "WALK_IN";

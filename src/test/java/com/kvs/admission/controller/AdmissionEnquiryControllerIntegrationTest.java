@@ -3,6 +3,7 @@ package com.kvs.admission.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kvs.admission.dto.AdmissionEnquiryResponse;
 import com.kvs.admission.dto.CaptureEnquiryRequest;
+import com.kvs.admission.dto.EnquiryDecisionRequest;
 import com.kvs.admission.service.AdmissionEnquiryService;
 import com.kvs.core.exception.ConflictException;
 import com.kvs.core.exception.ResourceNotFoundException;
@@ -23,8 +24,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -330,5 +333,55 @@ class AdmissionEnquiryControllerIntegrationTest {
                         .header("X-Span-Id", "custom-span-888"))
                 .andExpect(header().string("X-Trace-Id", "custom-trace-999"))
                 .andExpect(header().string("X-Span-Id", "custom-span-888"));
+    }
+
+    // --- Decision: Not offered / Withdrawn ---
+
+    @Test
+    @DisplayName("PATCH /api/v1/admissions/enquiries/{id}/decision - admission officer closes as Not offered returns 200")
+    void testDecision_Success() throws Exception {
+        String officer = jwtTokenService.generateToken("officer@kvs.com", Map.of("roles", List.of("ROLE_ADMISSION_OFFICER")));
+        when(admissionEnquiryService.closeEnquiry(eq(ENQUIRY_UUID), any(EnquiryDecisionRequest.class)))
+                .thenReturn(AdmissionEnquiryResponse.builder().enquiryId(ENQUIRY_UUID).enquiryStatus("REJECTED").build());
+
+        mockMvc.perform(patch("/api/v1/admissions/enquiries/" + ENQUIRY_UUID + "/decision")
+                        .header("Authorization", "Bearer " + officer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new EnquiryDecisionRequest("REJECTED", "Seats full for Class 6"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.enquiryStatus").value("REJECTED"));
+    }
+
+    @Test
+    @DisplayName("PATCH …/decision - unknown decision or blank reason returns 400")
+    void testDecision_Validation() throws Exception {
+        String officer = jwtTokenService.generateToken("officer@kvs.com", Map.of("roles", List.of("ROLE_ADMISSION_OFFICER")));
+        mockMvc.perform(patch("/api/v1/admissions/enquiries/" + ENQUIRY_UUID + "/decision")
+                        .header("Authorization", "Bearer " + officer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new EnquiryDecisionRequest("ENROLLED", ""))))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PATCH …/decision - counselor is forbidden (403)")
+    void testDecision_Forbidden() throws Exception {
+        mockMvc.perform(patch("/api/v1/admissions/enquiries/" + ENQUIRY_UUID + "/decision")
+                        .header("Authorization", "Bearer " + counselorToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new EnquiryDecisionRequest("WITHDRAWN", "Family moved"))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("PATCH …/decision - already enrolled returns 409")
+    void testDecision_Conflict() throws Exception {
+        when(admissionEnquiryService.closeEnquiry(eq(ENQUIRY_UUID), any(EnquiryDecisionRequest.class)))
+                .thenThrow(new ConflictException("Application APP-2026-ABCD1234 is already ENROLLED and cannot be closed again"));
+        mockMvc.perform(patch("/api/v1/admissions/enquiries/" + ENQUIRY_UUID + "/decision")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new EnquiryDecisionRequest("WITHDRAWN", "Family moved"))))
+                .andExpect(status().isConflict());
     }
 }

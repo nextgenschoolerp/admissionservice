@@ -2,6 +2,7 @@ package com.kvs.admission.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -61,4 +62,23 @@ public class CaptureEnquiryRequest {
     /** Optional marketing campaign the lead came from (US-02019); must be an existing campaign of the tenant. */
     @Size(max = 50, message = "Campaign code must not exceed 50 characters")
     private String campaignCode;
+
+    /** Optional; when given, enrolment (US-02005) uses it instead of asking again */
+    @Past(message = "Candidate date of birth must be in the past")
+    private java.time.LocalDate candidateDateOfBirth;
+
+    private com.kvs.admission.enums.Gender candidateGender;
+
+    /** How the guardian is related to the candidate, e.g. Mother, Father, Guardian */
+    @Size(max = 30, message = "Guardian relationship must not exceed 30 characters")
+    private String guardianRelationship;
+
+    /** The fields of the original request (no date of birth, gender or relationship). */
+    public CaptureEnquiryRequest(String tenantId, String branchId, String candidateFirstName, String candidateLastName,
+                                 String targetGradeId, String academicYearId, String guardianName, String guardianEmail,
+                                 String guardianPhone, String referralSource, String assignedCounselorId, String remarks,
+                                 String campaignCode) {
+        this(tenantId, branchId, candidateFirstName, candidateLastName, targetGradeId, academicYearId, guardianName,
+                guardianEmail, guardianPhone, referralSource, assignedCounselorId, remarks, campaignCode, null, null, null);
+    }
 }

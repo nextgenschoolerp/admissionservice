@@ -91,7 +91,16 @@ class AdmissionPipelineEndToEndTest {
 
         // --- US-02001: three walk-in leads ---------------------------------------------------------
         String ashaParentEmail = "asha.parent." + run + "@example.com";
-        UUID asha = captureEnquiry(counselor, "Asha", "Rao", ashaParentEmail, "+9190000" + digits(5, 1));
+        // Asha's application records her date of birth, gender and the guardian's relationship (reused at enrolment)
+        CaptureEnquiryRequest ashaRequest = new CaptureEnquiryRequest(tenantId, branchId, "Asha", "Rao", gradeId, yearId,
+                "Asha Parent", ashaParentEmail, "+9190000" + digits(5, 1), "WALK_IN", null, null, null,
+                LocalDate.of(2014, 6, 1), Gender.FEMALE, "Mother");
+        UUID asha = UUID.fromString(read(perform(post("/api/v1/admissions/enquiries"), counselor, ashaRequest)
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.candidateDateOfBirth").value("2014-06-01"))
+                .andExpect(jsonPath("$.data.candidateGender").value("FEMALE"))
+                .andExpect(jsonPath("$.data.guardianRelationship").value("Mother"))
+                .andReturn(), "$.data.enquiryId"));
         UUID rohan = captureEnquiry(counselor, "Rohan", "Mehta", "rohan.parent." + run + "@example.com", "+9190000" + digits(5, 2));
         UUID kiran = captureEnquiry(counselor, "Kiran", "Das", "kiran.parent." + run + "@example.com", "+9190000" + digits(5, 3));
 
@@ -256,9 +265,11 @@ class AdmissionPipelineEndToEndTest {
         // --- US-02005: conversion into Student Master record -----------------------------------------
         String otherParent = token("someone.else." + run + "@example.com", "APPLICANT_PARENT");
         perform(post(conversionUrl), otherParent, conversion).andExpect(status().isForbidden());
-        MvcResult student = perform(post(conversionUrl), ashaParent, conversion)
+        // No date of birth or gender in the request: both come from the application
+        MvcResult student = perform(post(conversionUrl), ashaParent, new ConvertLeadRequest())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.data.dateOfBirth").value("2014-06-01"))
                 .andExpect(jsonPath("$.data.gender").value("FEMALE"))
                 .andExpect(jsonPath("$.data.gradeId").value(gradeId))
                 .andReturn();

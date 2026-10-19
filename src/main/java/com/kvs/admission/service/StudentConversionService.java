@@ -97,6 +97,14 @@ public class StudentConversionService {
             throw new BadRequestException("Mandatory documents are missing or not yet verified: " + unverified);
         }
 
+        // Date of birth and gender come from the application unless the registrar gives them now
+        java.time.LocalDate dateOfBirth = request.getDateOfBirth() != null ? request.getDateOfBirth() : enquiry.getCandidateDateOfBirth();
+        com.kvs.admission.enums.Gender gender = request.getGender() != null ? request.getGender() : enquiry.getCandidateGender();
+        if (dateOfBirth == null || gender == null) {
+            throw new BadRequestException((dateOfBirth == null ? "Date of birth" : "Gender") + " is required: application "
+                    + enquiry.getApplicationNumber() + " does not record it");
+        }
+
         String gradeId = enquiry.getTargetGradeId();
         List<AdmissionOffer> offers = offerRepository.findByEnquiryIdOrderByCreatedAtDesc(enquiryId);
         if (!offers.isEmpty()) {
@@ -115,8 +123,8 @@ public class StudentConversionService {
         student.setAdmissionNumber(ReferenceNumberGenerator.next("ADM"));
         student.setFirstName(enquiry.getCandidateFirstName());
         student.setLastName(enquiry.getCandidateLastName());
-        student.setDateOfBirth(request.getDateOfBirth());
-        student.setGender(request.getGender());
+        student.setDateOfBirth(dateOfBirth);
+        student.setGender(gender);
         student.setGradeId(gradeId);
         student.setAcademicYearId(enquiry.getAcademicYearId());
         student.setGuardianName(enquiry.getGuardianName());
@@ -126,6 +134,8 @@ public class StudentConversionService {
         student.setConvertedBy(SecurityUtils.getCurrentUserEmail().orElse("applicant_parent"));
         StudentMasterRecord saved = studentRepository.save(student);
 
+        enquiry.setCandidateDateOfBirth(dateOfBirth);
+        enquiry.setCandidateGender(gender);
         enquiry.setEnquiryStatus(EnquiryStatus.ENROLLED.name());
         admissionEnquiryRepository.save(enquiry);
 

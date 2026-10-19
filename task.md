@@ -1,183 +1,188 @@
-# Task Execution Record: Module 02 — Admission Management & Lead CRM (US-02002 – US-02100)
+# Task Execution Record: Module 02 — Admission Management, Lead CRM & Student Recruitment Pipeline
 
-Batch 1 (US-02002 – US-02010) is sections 1-6; batch 2 (US-02011 – US-02100) is sections B1-B5 at the end.
-
-Execution of skill [`brd-to-api`](../.agents/skills/brd-to-api/SKILL.md) covering **US-02002 through US-02010** from [`School_ERP_Module_02_Admissions_CRM_1000.md`](../story/module2/School_ERP_Module_02_Admissions_CRM_1000.md).
+Execution of the `brd-to-api` skill for **Module 02** based on [`story/module2/School_ERP_Module_02_Admissions_CRM_1000.md`](../story/module2/School_ERP_Module_02_Admissions_CRM_1000.md) and [`module2.sql`](../story/module2/module2.sql).
 
 ---
 
 ## 1. Input Specification & Target Microservice Resolution
 
-- **Module**: Module 02 — Admission Management, Lead CRM & Student Recruitment Pipeline
-- **BRD Source File**: `story/module2/School_ERP_Module_02_Admissions_CRM_1000.md`
-- **Target Microservice**: `admissionservice` (existing; US-02001 already implemented here)
+- **User Stories**: `US-02001` … `US-02020` (the 20 base stories, scenario 1 of each) and `US-02021` … `US-02100` (80 scenario variations). `ScenarioActorAccessTest` checks the actor decision of every story from US-02011 to US-02100 (90 cases). The BRD's 1,000 entries are 50 variations of the 20 base stories.
+- **Module**: `02` — Admission Management, Lead CRM & Student Recruitment Pipeline
+- **Target Microservice**: `admissionservice`
 - **Base Package**: `com.kvs.admission`
-- **Server Port**: `8083`, the value already in `application.yml`. The skill table says 8082; left unchanged.
-- **Context path**: `/admissionservice` (`server.servlet.context-path`, override with `SERVER_CONTEXT_PATH`), so the base URL is `http://localhost:8083/admissionservice`.
-- **Service Lifecycle Status**: [x] Existing Microservice  [ ] New Microservice
-- **Schema reference**: `story/module2/module2.sql` (tables `entrance_evaluations`, `applicant_documents`, `admission_offers`, `admission_fee_deposits` followed and extended)
-
-> Note: the skill's table maps Module 02 to `US-01001`–`US-02000`, but the Module 02 backlog numbers its stories `US-02001`+. They follow US-02001 into `admissionservice`, as the BRD path dictates.
+- **Allocated Server Port**: `8083`, context path `/admissionservice` ([`application.yml`](src/main/resources/application.yml), `SERVER_PORT` / `SERVER_CONTEXT_PATH`). Test port `18083`.
+- **Database**: shared PostgreSQL database `authservice` (as authservice, studentservice, financeservice and examservice), tables created by Hibernate `ddl-auto: update`; existing databases also need the one-off enum upgrade script (§4, Step 9)
+- **Service Lifecycle Status**:
+  - [x] Existing Microservice (US-02001 was built first; US-02002 … US-02020 added in two batches)
+  - [ ] New Microservice
+- **Reference Architecture**: `references/java-patterns.md`; Spring Boot 3.2.5, Java 21, `com.kvs.core:ms-core:1.0.0-SNAPSHOT`, PDFBox 3.0.3 (merit list PDF)
+- **Downstream**: *Enrol student* hands the candidate to studentservice (`POST /api/v1/students`); finance fees start from the class fee schedule in financeservice.
 
 ---
 
-## 2. Requirement Extraction
+## 2. Requirement Extraction (from BRD)
 
-| Story | Actor → Role | Capability | Sub-module header in BRD |
+| Story | Capability | Actor → Role |
+|---|---|---|
+| US-02001 | Capture walk-in and online enquiries (leads) | Front-Office Counselor → `ROLE_FRONT_OFFICE_COUNSELOR`; Admission Officer; Applicant Parent (own enquiry) |
+| US-02002 | Schedule entrance exams and issue admit cards | Admission Officer → `ROLE_ADMISSION_OFFICER` |
+| US-02003 | Score entrance tests and interviews with a standard rubric | Registrar → `ROLE_REGISTRAR` |
+| US-02004 | Upload birth / transfer certificates to the document vault and verify them | Entrance Exam Evaluator → `ROLE_ENTRANCE_EXAM_EVALUATOR`; Registrar |
+| US-02005 | Convert a verified lead into a Student Master record (enrol) | Applicant Parent → `ROLE_APPLICANT_PARENT`; Registrar |
+| US-02006 | Issue offer letters with an embedded fee payment link | Finance Cashier → `ROLE_FINANCE_CASHIER`; Admission Officer |
+| US-02007 | Lead conversion rates per channel / referral source | Marketing Manager → `ROLE_MARKETING_MANAGER` |
+| US-02008 | Collect seat deposits and issue digital receipts | School Principal → `ROLE_SCHOOL_PRINCIPAL`; Finance Cashier |
+| US-02009 | WhatsApp reminders for entrance evaluations | Front-Office Counselor |
+| US-02010 | Rank candidates by weighted entrance scores (merit list) | Admission Officer |
+| US-02011 | Flag incomplete document submissions; auto-resolve when verified | Registrar |
+| US-02012 | Merit list noticeboard PDF (masked names by default) | Entrance Exam Evaluator; Principal |
+| US-02013 | Grade sections, auto-placement and manual placement | Admission Officer; Registrar |
+| US-02014 | Waitlist queue with a seat rule and escalation | Admission Officer |
+| US-02015 | Counselling call notes with automatic callbacks | Front-Office Counselor; Marketing Manager (read) |
+| US-02016 | Scholarship fee waivers with category caps and four-eyes approval | Admission Officer / Registrar request; Principal decides |
+| US-02017 | Transfer certificate check with the education board | Front-Office Counselor; Registrar |
+| US-02018 | Bulk acceptance notifications (idempotent per offer) | Admission Officer |
+| US-02019 | Marketing campaigns and cost per acquisition | Marketing Manager |
+| US-02020 | Archive closed leads with trend snapshots | Principal; Admission Officer |
+
+The BRD rotates actors across the scenario variations; each US-02011 … US-02100 actor was **granted where it fits the business process and refused otherwise** (decision confirmed by the product owner). The full table is [`wiki/api-docs/US-02011-US-02100-scenario-actor-matrix.md`](wiki/api-docs/US-02011-US-02100-scenario-actor-matrix.md); each decision is asserted by `ScenarioActorAccessTest`.
+
+Pipeline status flow: `NEW_INQUIRY → CONTACTED (02015) → EVALUATION_SCHEDULED (02002) → EVALUATION_PASSED (02003) → OFFER_ISSUED (02006) → [offer ACCEPTED by deposit 02008] → ENROLLED (02005)`; any open application can be closed as `REJECTED` (Not offered) or `WITHDRAWN`.
+
+### Acceptance Criteria (each story)
+- [x] **AC-1 (Privileges)**: `@PreAuthorize` per endpoint (§3), served live by `GET /api/v1/admissions/access-rules`; parents only act on enquiries registered under their own e-mail (`AdmissionAccessGuard`)
+- [x] **AC-2 (Execution/Input)**: endpoints accept the documented payloads
+- [x] **AC-3 (Validation)**: Jakarta validation and business rules → `400`; malformed JSON, unknown enum values, missing parts → `400`, oversized uploads → `413` (`AdmissionRequestExceptionHandler`)
+- [x] **AC-4 (Persistence)**: transactional services; the deposit takes a pessimistic lock on the offer
+- [x] **AC-5 (Audit Trail)**: `AdmissionAuditService` writes an `audit_logs` row for every story (asserted in the end-to-end tests)
+- [x] **AC-6 (Security/Isolation)**: `401` without a token, `403` for other roles, `409` for duplicate or closed records
+
+---
+
+## 3. API Contract & Architectural Design
+
+Paths are under `/api/v1/admissions`. Roles are the `@PreAuthorize` of each endpoint, read from the running service (`GET /api/v1/admissions/access-rules`, 56 endpoints); `SUPER_ADMIN` is allowed everywhere.
+
+| Method | Path | Story | Roles |
 |---|---|---|---|
-| US-02002 | Admission Officer → `ROLE_ADMISSION_OFFICER` | Schedule entrance exams, auto-generate admit cards | Admission Inquiry Tracking, Follow-ups & Lead Nurturing CRM |
-| US-02003 | Registrar → `ROLE_REGISTRAR` | Evaluate interview scores with standardized rubric | Entrance Examination Scheduling, Roll Numbers & Seating |
-| US-02004 | Entrance Exam Evaluator → `ROLE_ENTRANCE_EXAM_EVALUATOR` | Upload birth / transfer certificates to document vault | Candidate Scoring, Assessment Rubrics & Merit List Generation |
-| US-02005 | Applicant Parent → `ROLE_APPLICANT_PARENT` | Convert verified leads into Student Master records | Document Vault Upload, Verification & Identity Validation |
-| US-02006 | Finance Cashier → `ROLE_FINANCE_CASHIER` | Issue offer letters with embedded fee payment links | Offer Letter Generation, Acceptance & Seat Reservation |
-| US-02007 | Marketing Manager → `ROLE_MARKETING_MANAGER` | Track lead conversion rates per channel / referral source | Direct Lead Conversion to Active Student Master Record |
-| US-02008 | School Principal → `ROLE_SCHOOL_PRINCIPAL` | Collect seat deposits, issue digital receipts | Admission Fee Collection, Receipting & Deposit Clearance |
-| US-02009 | Front-Office Counselor → `ROLE_FRONT_OFFICE_COUNSELOR` | Dispatch automated WhatsApp reminders for entrance evaluations | Referral Attribution, Marketing Campaign ROI & CRM Analytics |
-| US-02010 | Admission Officer → `ROLE_ADMISSION_OFFICER` | Rank candidates by weighted entrance test scores | Applicant Communication, Automated SMS/WhatsApp Nudges |
+| `POST` | `/enquiries` | US-02001 | FRONT_OFFICE_COUNSELOR, ADMISSION_OFFICER, APPLICANT_PARENT (own) |
+| `GET` | `/enquiries`, `/enquiries/{enquiryId}` | US-02001 | FRONT_OFFICE_COUNSELOR, ADMISSION_OFFICER, REGISTRAR, ENTRANCE_EXAM_EVALUATOR, FINANCE_CASHIER, SCHOOL_PRINCIPAL (+ APPLICANT_PARENT for one enquiry) |
+| `PATCH` | `/enquiries/{enquiryId}/decision` | – (Not offered / Withdrawn) | ADMISSION_OFFICER, SCHOOL_PRINCIPAL |
+| `POST` | `/entrance-exams` | US-02002 | ADMISSION_OFFICER |
+| `GET` | `/entrance-exams/{examId}`, `/{examId}/admit-cards` | US-02002 | ADMISSION_OFFICER, FRONT_OFFICE_COUNSELOR |
+| `GET` | `/evaluation-rubrics` | US-02003 | REGISTRAR, ENTRANCE_EXAM_EVALUATOR, ADMISSION_OFFICER |
+| `POST` / `GET` | `/evaluations`, `/evaluations/{evaluationId}`, `/enquiries/{enquiryId}/evaluations` | US-02003 | REGISTRAR, ADMISSION_OFFICER |
+| `POST` | `/enquiries/{enquiryId}/documents` (multipart) | US-02004 | ENTRANCE_EXAM_EVALUATOR, SCHOOL_PRINCIPAL, ADMISSION_OFFICER |
+| `GET` | `/enquiries/{enquiryId}/documents` | US-02004 | ENTRANCE_EXAM_EVALUATOR, REGISTRAR, ADMISSION_OFFICER |
+| `PATCH` | `/documents/{documentId}/verification` | US-02004 | REGISTRAR, ADMISSION_OFFICER |
+| `POST` | `/enquiries/{enquiryId}/student-conversion` | US-02005 | APPLICANT_PARENT (own), FRONT_OFFICE_COUNSELOR, ADMISSION_OFFICER, REGISTRAR |
+| `GET` | `/students/{studentId}` | US-02005 | APPLICANT_PARENT (own), FRONT_OFFICE_COUNSELOR, ADMISSION_OFFICER, REGISTRAR |
+| `POST` | `/offers` | US-02006 | FINANCE_CASHIER, ADMISSION_OFFICER |
+| `GET` | `/offers/{offerId}`, `/enquiries/{enquiryId}/offers` | US-02006 | FINANCE_CASHIER, ADMISSION_OFFICER, SCHOOL_PRINCIPAL |
+| `GET` | `/analytics/conversion-rates` | US-02007 | MARKETING_MANAGER, REGISTRAR, ADMISSION_OFFICER |
+| `POST` | `/offers/{offerId}/deposits` | US-02008 | SCHOOL_PRINCIPAL, FINANCE_CASHIER |
+| `GET` | `/deposits/receipts/{receiptNumber}` | US-02008 | SCHOOL_PRINCIPAL, FINANCE_CASHIER, ADMISSION_OFFICER |
+| `POST` | `/reminders/entrance-evaluations` | US-02009 | FRONT_OFFICE_COUNSELOR, ADMISSION_OFFICER |
+| `POST` | `/merit-lists` | US-02010 | ADMISSION_OFFICER |
+| `GET` | `/merit-lists/{meritListId}` | US-02010 | ADMISSION_OFFICER, REGISTRAR, SCHOOL_PRINCIPAL |
+| `GET` / `POST` / `PATCH` | `/document-follow-ups`, `/document-follow-ups/scan`, `/{followUpId}/resolution` | US-02011 | list: REGISTRAR, ADMISSION_OFFICER, FRONT_OFFICE_COUNSELOR; scan / resolve: REGISTRAR, ADMISSION_OFFICER |
+| `GET` | `/merit-lists/{meritListId}/pdf` | US-02012 | ENTRANCE_EXAM_EVALUATOR, SCHOOL_PRINCIPAL, ADMISSION_OFFICER, REGISTRAR |
+| `GET` / `PUT` / `POST` | `/grade-sections`, `/grade-sections/auto-placement`, `PUT /students/{studentId}/placement` | US-02013 | list: ADMISSION_OFFICER, REGISTRAR, FRONT_OFFICE_COUNSELOR, SCHOOL_PRINCIPAL; change: ADMISSION_OFFICER, REGISTRAR |
+| `GET` | `/waitlists` | US-02014 | ADMISSION_OFFICER, REGISTRAR, SCHOOL_PRINCIPAL |
+| `PUT` / `POST` / `DELETE` | `/waitlists/rules`, `/waitlists/entries[/{entryId}]`, `/waitlists/escalation` | US-02014 | ADMISSION_OFFICER |
+| `POST` / `GET` | `/enquiries/{enquiryId}/calls` | US-02015 | log: FRONT_OFFICE_COUNSELOR, ADMISSION_OFFICER; list: + MARKETING_MANAGER |
+| `GET` / `PATCH` | `/callbacks`, `/callbacks/{callbackId}/cancellation` | US-02015 | list: FRONT_OFFICE_COUNSELOR, ADMISSION_OFFICER, MARKETING_MANAGER; cancel: FRONT_OFFICE_COUNSELOR, ADMISSION_OFFICER |
+| `POST` | `/offers/{offerId}/fee-waivers` | US-02016 | ADMISSION_OFFICER, REGISTRAR, SCHOOL_PRINCIPAL |
+| `GET` | `/fee-waivers[/{waiverId}]` | US-02016 | ADMISSION_OFFICER, REGISTRAR, SCHOOL_PRINCIPAL, FINANCE_CASHIER |
+| `PATCH` | `/fee-waivers/{waiverId}/decision` | US-02016 | SCHOOL_PRINCIPAL |
+| `POST` / `GET` | `/enquiries/{enquiryId}/transfer-certificate/verifications` | US-02017 | FRONT_OFFICE_COUNSELOR, REGISTRAR, ADMISSION_OFFICER |
+| `POST` | `/acceptance-notifications` | US-02018 | ADMISSION_OFFICER |
+| `GET` / `POST` / `PATCH` | `/marketing-campaigns[/{campaignId}]` | US-02019 | list: MARKETING_MANAGER, ADMISSION_OFFICER, FRONT_OFFICE_COUNSELOR; change: MARKETING_MANAGER |
+| `GET` | `/analytics/cost-per-acquisition` | US-02019 | MARKETING_MANAGER, ADMISSION_OFFICER |
+| `POST` | `/lead-archives` | US-02020 | SCHOOL_PRINCIPAL, ADMISSION_OFFICER |
+| `GET` | `/analytics/archived-lead-trends` | US-02020 | SCHOOL_PRINCIPAL, ADMISSION_OFFICER, MARKETING_MANAGER |
+| `GET` | `/access-rules` | – (tooling) | any signed-in user |
 
-### Acceptance Criteria (identical template for every story)
+### Component Mapping
+- **Entities** (extend `BaseAuditEntity`): `AdmissionEnquiry`, `EntranceExamSchedule`, `AdmitCard`, `EntranceEvaluation`, `EvaluationRubricScore`, `ApplicantDocument`, `StudentMasterRecord`, `AdmissionOffer`, `AdmissionFeeDeposit`, `ApplicantNotification`, `MeritList`, `MeritListEntry`, `DocumentFollowUp`, `GradeSection`, `WaitlistRule`, `WaitlistEntry`, `CounselingCall`, `CallbackTask`, `FeeWaiver`, `TcVerification`, `MarketingCampaign`, `ArchivedLeadSnapshot`, `AuditLog`
+- **Services**: one per capability (`AdmissionEnquiryService`, `EntranceExamService`, `ApplicantEvaluationService`, `ApplicantDocumentService` + `DocumentVaultStorage`, `StudentConversionService`, `AdmissionOfferService`, `LeadConversionAnalyticsService`, `AdmissionFeeDepositService`, `ApplicantReminderService` + scheduler + `WhatsAppGateway`, `MeritListService` + `MeritRankingCalculator` + `MeritListPdfRenderer`, `DocumentFollowUpService`, `SectionPlacementService`, `WaitlistService`, `CounselingCallService`, `FeeWaiverService`, `TransferCertificateVerificationService`, `AcceptanceNotificationService`, `MarketingCampaignService`, `LeadArchiveService`); shared `AdmissionAccessGuard`, `AdmissionAuditService`, `ReferenceNumberGenerator`
+- **Controllers** (20): `AdmissionEnquiryController`, `EntranceExamController`, `ApplicantEvaluationController`, `ApplicantDocumentController`, `StudentConversionController`, `AdmissionOfferController`, `AdmissionAnalyticsController`, `AdmissionFeeDepositController`, `ApplicantReminderController`, `MeritListController`, `DocumentFollowUpController`, `SectionPlacementController`, `WaitlistController`, `CounselingCallController`, `FeeWaiverController`, `TransferCertificateVerificationController`, `AcceptanceNotificationController`, `MarketingCampaignController`, `LeadArchiveController`, `AccessRuleController`
 
-- [x] **AC-1 (Privileges)**: `@PreAuthorize` per endpoint; story actor + `SUPER_ADMIN` (+ closely related staff roles) allowed.
-- [x] **AC-2 (Execution/Input)**: Endpoint executes the capability with valid parameters.
-- [x] **AC-3 (Validation)**: Jakarta validation + business-rule checks return `400`.
-- [x] **AC-4 (Persistence)**: State persisted transactionally (new tables listed below).
-- [x] **AC-5 (Audit Trail)**: `AdmissionAuditService` writes an `audit_logs` row for every story (verified in the end-to-end test).
-- [x] **AC-6 (Security/Isolation)**: `401` without token, `403` for wrong role; parents restricted to their own leads (US-02005).
-
----
-
-## 3. API Contract & Component Mapping
-
-| Story | Method & Path | Controller | Service | Entities (tables) |
-|---|---|---|---|---|
-| US-02002 | `POST /api/v1/admissions/entrance-exams`, `GET /{examId}`, `GET /{examId}/admit-cards` | `EntranceExamController` | `EntranceExamService` | `EntranceExamSchedule`, `AdmitCard` |
-| US-02003 | `GET /api/v1/admissions/evaluation-rubrics`, `POST /evaluations`, `GET /evaluations/{id}`, `GET /enquiries/{id}/evaluations` | `ApplicantEvaluationController` | `ApplicantEvaluationService` | `EntranceEvaluation`, `EvaluationRubricScore` |
-| US-02004 | `POST/GET /api/v1/admissions/enquiries/{id}/documents` (multipart), `PATCH /documents/{id}/verification` | `ApplicantDocumentController` | `ApplicantDocumentService`, `DocumentVaultStorage` | `ApplicantDocument` |
-| US-02005 | `POST /api/v1/admissions/enquiries/{id}/student-conversion`, `GET /students/{id}` | `StudentConversionController` | `StudentConversionService` | `StudentMasterRecord` |
-| US-02006 | `POST /api/v1/admissions/offers`, `GET /offers/{id}`, `GET /enquiries/{id}/offers` | `AdmissionOfferController` | `AdmissionOfferService` | `AdmissionOffer` |
-| US-02007 | `GET /api/v1/admissions/analytics/conversion-rates` | `AdmissionAnalyticsController` | `LeadConversionAnalyticsService` | (reads `AdmissionEnquiry`) |
-| US-02008 | `POST /api/v1/admissions/offers/{id}/deposits`, `GET /deposits/receipts/{receiptNumber}` | `AdmissionFeeDepositController` | `AdmissionFeeDepositService` | `AdmissionFeeDeposit` |
-| US-02009 | `POST /api/v1/admissions/reminders/entrance-evaluations` (+ optional scheduler) | `ApplicantReminderController` | `ApplicantReminderService`, `ApplicantReminderScheduler`, `WhatsAppGateway` | `ApplicantNotification` |
-| US-02010 | `POST /api/v1/admissions/merit-lists`, `GET /merit-lists/{id}` | `MeritListController` | `MeritListService`, `MeritRankingCalculator` | `MeritList`, `MeritListEntry` |
-
-Shared additions: `enums/*` (status and type enums), `AdmissionAuditService` (audit writer), `ReferenceNumberGenerator`, and `exception/AdmissionRequestExceptionHandler`. The handler maps malformed JSON, unknown enum values, missing parameters or parts, and oversized uploads to `400`/`413`; the core `GlobalExceptionHandler` would otherwise answer `500`.
-
-Pipeline status flow driven by these stories:
-`NEW_INQUIRY → EVALUATION_SCHEDULED (02002) → EVALUATION_PASSED (02003) → OFFER_ISSUED (02006) → [offer ACCEPTED by deposit 02008] → ENROLLED (02005)`
+### Design notes
+- **One enquiry per guardian phone and e-mail per tenant**: a second application with the same contact answers `409` naming the existing application.
+- **Application details reused at enrolment** (19 Oct 2026): an enquiry can record the candidate's date of birth, gender and the guardian relationship (`candidateDateOfBirth`, `candidateGender`, `guardianRelationship`, all optional). The conversion body may be empty; it falls back to those and answers `400` only when the application has none. The UI's *Enrol student* step then creates the studentservice record in the chosen section with the same details.
+- **Closing an application** (`PATCH /enquiries/{id}/decision`): `REJECTED` (Not offered) or `WITHDRAWN` with a required reason appended to the remarks; `409` when already closed. No API set `REJECTED` before.
+- **Read access for stakeholders**: `GET /enquiries` and `/enquiries/{id}` also allow REGISTRAR, ENTRANCE_EXAM_EVALUATOR, FINANCE_CASHIER and SCHOOL_PRINCIPAL so each can open the applications they act on.
+- **Fee waivers**: the deposit endpoint expects the waiver-adjusted amount and rejects manual `WAIVER` payments; a fully waived deposit uses `PaymentMode.WAIVER`.
+- **Stubs**: WhatsApp (`LoggingWhatsAppGateway`) and the education board (`StubEducationBoardGateway`) answer deterministically; serials ending in `000` are "not found".
 
 ---
 
 ## 4. Implementation Checklist
 
-- [x] Step 0: Scaffolding — not needed (service exists)
-- [x] Step 1: Entities extending `BaseAuditEntity`, with unique constraints and indexes (9 new tables)
-- [x] Step 2: Request DTOs with Jakarta validation; response DTOs with Lombok `@Builder`
-- [x] Step 3: Repositories with finders, aggregate JPQL (US-02007) and a pessimistic lock (US-02008)
-- [x] Step 4: Services — `@Transactional`, domain exceptions, audit entries
-- [x] Step 5: Controllers — `@RestController`, `@PreAuthorize`, `@Valid`, `ApiResponse<T>` envelope
-- [x] Step 6: Tests — 8 controller test classes (201/400/401/403/404/409, trace headers), 1 end-to-end pipeline test with the real DB, 3 unit test classes
-- [x] Step 7: Single service collection `postman/School_ERP_AdmissionService.postman_collection.json` with one folder per story, US-02001 … US-02010 (v2.1, positive + negative, `pm.test` assertions, ID capture chaining the folders)
-- [x] Step 8: Single consolidated Confluence documentation file [`wiki/api-docs/School_ERP_Module_02_Admissions_API_Documentation.md`](wiki/api-docs/School_ERP_Module_02_Admissions_API_Documentation.md) with native Confluence `{expand:title=...}` blocks covering US-02001 through US-02020 and multi-scenario actor access matrix.
+### Step 0: Microservice Scaffolding
+- [x] Not needed: the service existed for US-02001 (port 8083, context path, shared DB, JWT, tracing)
+- [x] Configuration added: `admission.document-vault.*`, `admission.payment.link-base-url`, `admission.reminders.auto-dispatch.*`, waitlist auto-escalation, multipart limit 5 MB
 
-New configuration (`application.yml`): `admission.document-vault.*`, `admission.payment.link-base-url`, `admission.reminders.auto-dispatch.*`, multipart limit 5 MB.
+### Steps 1–6
+- [x] 23 entities with unique constraints and indexes
+- [x] Request DTOs with Jakarta validation; response DTOs with Lombok builders
+- [x] Repositories with finders, aggregate JPQL (US-02007) and a pessimistic lock (US-02008)
+- [x] Services with domain exceptions and audit entries
+- [x] Controllers with `@PreAuthorize`, `@Valid`, `ApiResponse<T>`
+- [x] Tests: controller tests per story (201/400/401/403/404/409, trace headers), two end-to-end pipelines over HTTP + PostgreSQL, the scenario actor matrix and unit tests — **240 tests, 0 failures**
+- [x] `GET /api/v1/admissions/access-rules` (endpoint → roles, read from the running service) for the workflow runners
+
+### Step 7: Postman
+- [x] [`postman/School_ERP_AdmissionService.postman_collection.json`](postman/School_ERP_AdmissionService.postman_collection.json): 100 story folders, 218 requests (positive and negative, `pm.test` assertions, ids chained); scenario-repeat folders hold one authorization probe each
+
+### UI mapping
+- [x] Vite proxy `/api/v1/admissions` → `http://localhost:8083/admissionservice` (`ADMISSION_SERVICE_URL`)
+- [x] Students → Admissions tab, Review application with **Next step** per stakeholder (log a call, schedule exam, record assessment, issue offer, collect deposit, enrol, not offered / withdrawn), document verify / reject, Add student (application with documents) — [`frontend/docs/admissionservice-api-mapping.md`](../frontend/docs/admissionservice-api-mapping.md)
+- [x] Workflow runners: [`/dev/admission-workflow.html`](../frontend/dev/admission-workflow.html) (enquiry → enrolled, 14 steps) and [`/dev/student-lifecycle-workflow.html`](../frontend/dev/student-lifecycle-workflow.html) (enquiry → promotion, 15 steps)
+
+### Step 8: API Wiki
+- [x] [`wiki/api-docs/School_ERP_Module_02_Admissions_API_Documentation.md`](wiki/api-docs/School_ERP_Module_02_Admissions_API_Documentation.md) with `{expand}` blocks per story (US-02001 … US-02020) and the scenario actor matrix
+- [x] [`wiki/api-docs/US-02011-US-02100-scenario-actor-matrix.md`](wiki/api-docs/US-02011-US-02100-scenario-actor-matrix.md): 56 granted, 34 not granted
+- [x] [`wiki/workflows/DPS_Enquiry_to_Admission_Workflow.md`](wiki/workflows/DPS_Enquiry_to_Admission_Workflow.md)
+
+### Step 9: Seed and database upgrade
+- [x] [`src/main/resources/db/seed/module02_admission_seed.sql`](src/main/resources/db/seed/module02_admission_seed.sql) (re-runnable, ids `5eed0002-…`): DPS North Grade 6 pipeline for AY 2026-27 — 14 enquiries in every status, 2 exams with 7 admit cards, 9 evaluations, 6 vault documents, Aarav Sharma enrolled, 2 offers, a deposit, reminders, a merit list, follow-ups, sections, a waitlist, calls and callbacks, waivers, TC lookups, acceptance notices, 5 campaigns and an archived lead
+- [x] [`src/main/resources/db/upgrade/module02_us02011_us02020_enum_constraints.sql`](src/main/resources/db/upgrade/module02_us02011_us02020_enum_constraints.sql): run once on databases created before US-02011 (Hibernate does not update enum CHECK constraints)
 
 ---
 
-## 5. Verification
+## 5. Verification & Quality Gates
 
 ```bash
 cd admissionservice
 .\gradlew.bat test
 ```
 
-Result: **86 tests, 0 failures, 0 errors, 0 skipped** (includes the existing 11 US-02001 tests).
+Run on 19 Oct 2026:
 
-| Test class | Tests |
-|---|---|
-| AdmissionPipelineEndToEndTest (US-02001…02010 through HTTP + PostgreSQL) | 1 |
-| EntranceExamControllerIntegrationTest | 8 |
-| ApplicantEvaluationControllerIntegrationTest | 8 |
-| ApplicantDocumentControllerIntegrationTest | 8 |
-| StudentConversionControllerIntegrationTest | 8 |
-| AdmissionOfferControllerIntegrationTest | 7 |
-| AdmissionAnalyticsControllerIntegrationTest | 6 |
-| AdmissionFeeDepositControllerIntegrationTest | 7 |
-| ApplicantReminderControllerIntegrationTest | 5 |
-| MeritListControllerIntegrationTest | 6 |
-| MeritRankingCalculatorTest / LeadConversionAnalyticsServiceTest / DocumentVaultStorageTest | 5 / 2 / 4 |
-| AdmissionEnquiryControllerIntegrationTest (existing US-02001) | 11 |
-
-The Postman collection was validated as JSON (every `{{variable}}` is defined) but **not executed** against a running service.
-
-## 6. Known Gaps / Follow-ups
-
-- **WhatsApp**: `LoggingWhatsAppGateway` is a stub. A real provider needs a `WhatsAppGateway` bean.
-- **Offer letters**: content and payment link are generated and stored, but not emailed or SMSed. The payment page behind the link is out of scope (Module 04 finance).
-- **Student Master**: `student_master_records` is the admission-side hand-off. The Module 03 `studentservice` does not exist yet to consume it.
-- **Schema**: tables are created by Hibernate (now `ddl-auto: update`). `module2.sql` should be updated with the new tables before moving to Flyway.
-
----
-
-# Batch 2: US-02011 – US-02100
-
-Same skill, same service. The 90 stories are 10 new capabilities (US-02011 – US-02020, each repeated as Scenarios 1-5) plus Scenarios 2-5 of the 10 capabilities from batch 1. The backlog rotates actors, so each story's actor was **granted where it fits the business process and not granted otherwise** (decision confirmed by the product owner in this session). The full table is [`wiki/api-docs/US-02011-US-02100-scenario-actor-matrix.md`](wiki/api-docs/US-02011-US-02100-scenario-actor-matrix.md): **56 granted, 34 not granted**, each asserted by `ScenarioActorAccessTest`.
-
-## B1. New capabilities
-
-| Story (scenarios) | Capability | Controller / Service | Tables | Granted backlog actors |
-|---|---|---|---|---|
-| US-02011 (/31/51/71/91) | Flag incomplete document submissions, auto-resolve when verified | `DocumentFollowUpController` / `DocumentFollowUpService` | `document_follow_ups` | Registrar |
-| US-02012 (/32/52/72/92) | Merit list noticeboard PDF (masked names by default) | `MeritListController` / `MeritListPdfRenderer` (PDFBox 3.0.3) | — | Evaluator, Principal |
-| US-02013 (/33/53/73/93) | Grade sections, auto-placement, manual placement | `SectionPlacementController` / `SectionPlacementService` | `grade_sections`, `student_master_records.section_code` | none (Admission Officer / Registrar do it; parents see it on the student record) |
-| US-02014 (/34/54/74/94) | Waitlist queue, seat rule, escalation (+ optional daily scheduler) | `WaitlistController` / `WaitlistService` | `waitlist_rules`, `waitlist_entries` | Admission Officer |
-| US-02015 (/35/55/75/95) | Call notes with automatic callbacks | `CounselingCallController` / `CounselingCallService` | `counseling_calls`, `callback_tasks` | Marketing Manager (read-only) |
-| US-02016 (/36/56/76/96) | Scholarship fee waivers with category caps and four-eyes approval | `FeeWaiverController` / `FeeWaiverService` | `fee_waivers` | Principal |
-| US-02017 (/37/57/77/97) | Transfer certificate check with the education board (stub gateway) | `TransferCertificateVerificationController` / `…Service` | `tc_verifications` | Counselor |
-| US-02018 (/38/58/78/98) | Bulk acceptance notifications (WhatsApp, idempotent per offer) | `AcceptanceNotificationController` / `AcceptanceNotificationService` | `applicant_notifications.offer_id` | Admission Officer |
-| US-02019 (/39/59/79/99) | Marketing campaigns and cost-per-acquisition report | `MarketingCampaignController` / `MarketingCampaignService` | `marketing_campaigns`, `admission_enquiries.campaign_code` | Marketing Manager |
-| US-02020 (/40/60/80/100) | Archive closed leads with trend snapshots | `LeadArchiveController` / `LeadArchiveService` | `archived_lead_snapshots`, `admission_enquiries.archived_at` | Principal |
-
-## B2. Scenario repeats of batch-1 capabilities (40 stories)
-
-Covered by the existing endpoints; roles added where the actor fits:
-
-| Capability | Granted (role added) | Not granted |
+| Test class | Tests | What it proves |
 |---|---|---|
-| Capture enquiry (US-02021/41/61/81) | Applicant Parent - own enquiry only, guardian email must equal login email (added); Counselor | — |
-| Schedule exam (US-02022/42/62/82) | Admission Officer | Finance Cashier |
-| Evaluate (US-02023/43/63/83) | Registrar | Marketing Manager |
-| Upload documents (US-02024/44/64/84) | School Principal (added), Evaluator | — |
-| Convert lead (US-02025/45/65/85) | Front-Office Counselor (added), Parent | — |
-| Issue offer (US-02026/46/66/86) | Admission Officer, Cashier | — |
-| Conversion analytics (US-02027/47/67/87) | Registrar read-only (added), Marketing Manager | — |
-| Collect deposit (US-02028/48/68/88) | Principal | Entrance Exam Evaluator |
-| Reminders (US-02029/49/69/89) | Counselor | Applicant Parent |
-| Rank candidates (US-02030/50/70/90) | Admission Officer | Finance Cashier |
+| `AdmissionPipelineEndToEndTest` | 1 | US-02001 … US-02010 over HTTP + PostgreSQL in one cohort, incl. enrolment from the application's date of birth |
+| `AdmissionOperationsEndToEndTest` | 1 | US-02011 … US-02020 and the parent / counselor grants over HTTP + PostgreSQL |
+| `ScenarioActorAccessTest` (US-02011 … US-02100) | 90 | every actor decision: granted → 2xx, not granted → 403 |
+| `AdmissionUsernameTokenAccessTest` | 3 | authservice-shaped tokens (username subject, e-mail claim), counselor ownership, parent self-service |
+| `AdmissionEnquiryControllerIntegrationTest` | 15 | capture, list, get, close (Not offered / Withdrawn) |
+| 19 other controller test classes (exams, evaluations, documents, conversion, offers, analytics, deposits, reminders, merit list + PDF, follow-ups, sections, waitlist, calls, waivers, TC checks, acceptance notices, campaigns, lead archive) | 102 | validation, 401 / 403, domain errors per endpoint |
+| `AccessRuleControllerIntegrationTest` | 2 | endpoint → roles listing, 401 without a token |
+| `AdmissionRulesUnitTest` (9 nested groups), `MeritRankingCalculatorTest`, `LeadConversionAnalyticsServiceTest`, `DocumentVaultStorageTest` | 26 | document check, PDF masking, section balancing, callbacks, waiver caps, board stub, CPA, trends, ranking, vault storage |
+| **Total** | **240** | **0 failures, 0 errors** |
 
-Shared changes: `AdmissionAccessGuard` (staff-or-own-guardian rule used by enquiries, conversion and student records), `PaymentMode.WAIVER`, `NotificationType.ACCEPTANCE_NOTIFICATION`; the deposit endpoint now expects the waiver-adjusted amount and rejects manual `WAIVER` payments.
+- [x] UI regression `node .agents/skills/test-ui/scripts/api-regression.mjs --service admissionservice`: **48 of 48 cases pass** (test stack, after `db.ps1 -Cleanup`; ADM-19 … ADM-48 walk one application through every step as its stakeholder)
+- [x] Admission workflow runner: *Check permissions* green (56 endpoints, no staffing gaps), *Run whole workflow* 13 steps green and the waitlist step skipped by design
+- [x] Student lifecycle runner: steps 1–6 (admission) green, enrolment with an empty conversion body using the application's date of birth
+- [x] Browser: Add student with date of birth, gender and relationship → Review application shows them → *Enrol student* asks only for the section → the student profile shows the guardian as "Father · Primary contact"
 
-## B3. Database
+## 6. Not yet implemented / known gaps
 
-- New tables and columns are added by Hibernate (`ddl-auto: update`).
-- **Existing databases must run** [`db/upgrade/module02_us02011_us02020_enum_constraints.sql`](src/main/resources/db/upgrade/module02_us02011_us02020_enum_constraints.sql) once: Hibernate's enum CHECK constraints are not updated by `ddl-auto: update`, so `WAIVER` and `ACCEPTANCE_NOTIFICATION` are otherwise rejected. Applied to the local `authservice` database.
-- Seed [`db/seed/module02_admission_seed.sql`](src/main/resources/db/seed/module02_admission_seed.sql) extended for every new table (campaigns, follow-ups, sections, waitlist, calls, callbacks, waivers, TC lookups, acceptance notices, archive) and executed; re-run safe.
-
-## B4. Verification
-
-`.\gradlew.bat test`: **231 tests, 0 failures, 0 errors** (35 test classes), including:
-
-| Test | What it proves |
-|---|---|
-| `AdmissionOperationsEndToEndTest` | US-02011 – US-02020 and the parent/counselor grants through HTTP + PostgreSQL in one cohort |
-| `ScenarioActorAccessTest` (90 cases) | every story's actor decision: granted → 2xx, not granted → 403 |
-| 9 new controller test classes + `MeritListPdfExportIntegrationTest` | validation, 401/403, domain errors per endpoint |
-| `AdmissionRulesUnitTest` | document check, PDF masking/pagination, section balancing, callback rules, waiver caps, board stub, CPA, trend buckets |
-
-Postman: 100 story folders / 218 requests in `School_ERP_AdmissionService.postman_collection.json` (JSON and variables validated, **not executed** against a running service). Scenario-repeat folders contain one authorization probe: granted actors must not get 401/403; others must get 403.
-
-## B5. Known gaps
-
-- **Board registries**: `StubEducationBoardGateway` answers deterministically; no CBSE/ICSE/IB/state API is integrated.
-- **Notifications**: acceptance notices use the WhatsApp logging stub; no email channel.
-- **Schedulers**: waitlist escalation and reminders schedulers are off by default (`WAITLIST_AUTO_ESCALATION_ENABLED`, `REMINDER_AUTO_DISPATCH_ENABLED`).
-- **US-02013 / US-02029 / some repeats**: where no backlog actor was granted, the capability is still delivered through the roles that own the process; confirm the matrix with the business before go-live.
+- **Board registries**: `StubEducationBoardGateway` answers deterministically; no CBSE / ICSE / IB / state API is integrated.
+- **Notifications**: reminders and acceptance notices use the WhatsApp logging stub; offer letters are generated and stored but not e-mailed or sent by SMS. The payment page behind the offer link is out of scope.
+- **Schedulers**: waitlist escalation and reminder schedulers are off by default (`WAITLIST_AUTO_ESCALATION_ENABLED`, `REMINDER_AUTO_DISPATCH_ENABLED`).
+- **Add student**: the student photo, house, medical fields and emergency contact are entered on the form but not stored on the application (no fields); class placement happens at enrolment.
+- **Schema**: tables come from Hibernate; `module2.sql` should gain the new tables before moving to Flyway.
+- **Actor matrix**: where no backlog actor was granted (e.g. US-02013, US-02029), the capability is delivered through the roles that own the process; confirm with the business before go-live.

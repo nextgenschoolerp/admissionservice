@@ -2,6 +2,7 @@ package com.kvs.admission.controller;
 
 import com.kvs.admission.dto.AdmissionEnquiryResponse;
 import com.kvs.admission.dto.CaptureEnquiryRequest;
+import com.kvs.admission.dto.EnquiryDecisionRequest;
 import com.kvs.admission.service.AdmissionEnquiryService;
 import com.kvs.core.dto.ApiResponse;
 import jakarta.validation.Valid;
@@ -53,7 +54,8 @@ public class AdmissionEnquiryController {
      * @return 200 OK with the enquiry details
      */
     @GetMapping("/{enquiryId}")
-    @PreAuthorize("hasAnyRole('FRONT_OFFICE_COUNSELOR', 'ADMISSION_OFFICER', 'APPLICANT_PARENT', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('FRONT_OFFICE_COUNSELOR', 'ADMISSION_OFFICER', 'APPLICANT_PARENT', 'REGISTRAR', 'ENTRANCE_EXAM_EVALUATOR', "
+            + "'FINANCE_CASHIER', 'SCHOOL_PRINCIPAL', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<AdmissionEnquiryResponse>> getEnquiry(
             @PathVariable("enquiryId") UUID enquiryId) {
         log.info("Request to fetch admission enquiry: {}", enquiryId);
@@ -68,8 +70,24 @@ public class AdmissionEnquiryController {
      * @param branchId the branch identifier
      * @return 200 OK with list of enquiries
      */
+    /**
+     * Closes an open application as "Not offered" (REJECTED) or WITHDRAWN, with the reason.
+     * Actors: Admission Officer, School Principal
+     */
+    @PatchMapping("/{enquiryId}/decision")
+    @PreAuthorize("hasAnyRole('ADMISSION_OFFICER', 'SCHOOL_PRINCIPAL', 'SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<AdmissionEnquiryResponse>> decide(
+            @PathVariable("enquiryId") UUID enquiryId,
+            @Valid @RequestBody EnquiryDecisionRequest request) {
+        log.info("Request to close enquiry {} as {}", enquiryId, request.getDecision());
+        AdmissionEnquiryResponse response = admissionEnquiryService.closeEnquiry(enquiryId, request);
+        return ResponseEntity.ok(ApiResponse.success("Application closed as " + request.getDecision(), response));
+    }
+
+    // Read by every stakeholder who moves an application forward (registrar, evaluator, cashier, principal)
     @GetMapping
-    @PreAuthorize("hasAnyRole('FRONT_OFFICE_COUNSELOR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('FRONT_OFFICE_COUNSELOR', 'ADMISSION_OFFICER', 'REGISTRAR', 'ENTRANCE_EXAM_EVALUATOR', "
+            + "'FINANCE_CASHIER', 'SCHOOL_PRINCIPAL', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<List<AdmissionEnquiryResponse>>> listEnquiries(
             @RequestParam("tenantId") String tenantId,
             @RequestParam("branchId") String branchId) {

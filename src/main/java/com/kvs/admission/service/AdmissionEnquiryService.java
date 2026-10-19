@@ -2,10 +2,12 @@ package com.kvs.admission.service;
 
 import com.kvs.admission.dto.AdmissionEnquiryResponse;
 import com.kvs.admission.dto.CaptureEnquiryRequest;
+import com.kvs.admission.dto.EnquiryDecisionRequest;
 import com.kvs.admission.entity.AdmissionEnquiry;
 import com.kvs.admission.entity.AuditLog;
 import com.kvs.admission.entity.MarketingCampaign;
 import com.kvs.admission.enums.CampaignStatus;
+import com.kvs.admission.enums.EnquiryStatus;
 import com.kvs.admission.repo.AdmissionEnquiryRepository;
 import com.kvs.admission.repo.AuditLogRepository;
 import com.kvs.admission.repo.MarketingCampaignRepository;
@@ -109,6 +111,10 @@ public class AdmissionEnquiryService {
         enquiry.setGuardianName(request.getGuardianName());
         enquiry.setGuardianEmail(request.getGuardianEmail());
         enquiry.setGuardianPhone(request.getGuardianPhone());
+        enquiry.setCandidateDateOfBirth(request.getCandidateDateOfBirth());
+        enquiry.setCandidateGender(request.getCandidateGender());
+        enquiry.setGuardianRelationship(request.getGuardianRelationship() == null || request.getGuardianRelationship().isBlank()
+                ? null : request.getGuardianRelationship().trim());
         enquiry.setReferralSource(request.getReferralSource() != null
                 ? request.getReferralSource()
                 : (selfService ? "PARENT_PORTAL" : "WALK_IN"));
@@ -149,6 +155,34 @@ public class AdmissionEnquiryService {
                 .orElseThrow(() -> new ResourceNotFoundException("AdmissionEnquiry", "enquiryId", enquiryId));
         accessGuard.requireStaffOrGuardian(enquiry.getGuardianEmail(), "You may only view your own enquiries");
         return mapToResponse(enquiry);
+    }
+
+    /**
+     * Closes an open application as REJECTED ("Not offered") or WITHDRAWN. The reason is appended to the
+     * remarks with who decided; enrolled or already closed applications cannot be closed again (409).
+     */
+    @Transactional
+    public AdmissionEnquiryResponse closeEnquiry(UUID enquiryId, EnquiryDecisionRequest request) {
+        AdmissionEnquiry enquiry = admissionEnquiryRepository.findByEnquiryId(enquiryId)
+                .orElseThrow(() -> new ResourceNotFoundException("AdmissionEnquiry", "enquiryId", enquiryId));
+        String status = enquiry.getEnquiryStatus();
+        if (EnquiryStatus.ENROLLED.name().equals(status) || EnquiryStatus.REJECTED.name().equals(status)
+                || EnquiryStatus.WITHDRAWN.name().equals(status)) {
+            throw new ConflictException("Application " + enquiry.getApplicationNumber() + " is already " + status
+                    + " and cannot be closed again");
+        }
+        String by = accessGuard.currentUserEmail().orElse("staff");
+        String label = EnquiryStatus.REJECTED.name().equals(request.getDecision()) ? "Not offered" : "Withdrawn";
+        String note = label + " (" + by + "): " + request.getReason().trim();
+        String remarks = enquiry.getRemarks() == null || enquiry.getRemarks().isBlank() ? note : enquiry.getRemarks() + " | " + note;
+        enquiry.setRemarks(remarks.length() > 2000 ? remarks.substring(remarks.length() - 2000) : remarks);
+        enquiry.setEnquiryStatus(request.getDecision());
+        AdmissionEnquiry saved = admissionEnquiryRepository.save(enquiry);
+
+        logAudit(enquiry.getTenantId(), "CLOSE_ENQUIRY_" + request.getDecision(), "SUCCESS",
+                "Application " + enquiry.getApplicationNumber() + " moved from " + status + " to " + request.getDecision()
+                        + " by " + by + " | Reason: " + request.getReason().trim());
+        return mapToResponse(saved);
     }
 
     /**
@@ -204,9 +238,12 @@ public class AdmissionEnquiryService {
                 .candidateLastName(entity.getCandidateLastName())
                 .targetGradeId(entity.getTargetGradeId())
                 .academicYearId(entity.getAcademicYearId())
+                .candidateDateOfBirth(entity.getCandidateDateOfBirth())
+                .candidateGender(entity.getCandidateGender() == null ? null : entity.getCandidateGender().name())
                 .guardianName(entity.getGuardianName())
                 .guardianEmail(entity.getGuardianEmail())
                 .guardianPhone(entity.getGuardianPhone())
+                .guardianRelationship(entity.getGuardianRelationship())
                 .referralSource(entity.getReferralSource())
                 .enquiryStatus(entity.getEnquiryStatus())
                 .assignedCounselorId(entity.getAssignedCounselorId())
