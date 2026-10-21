@@ -12,7 +12,7 @@ import java.util.UUID;
 
 /**
  * A recruitment marketing campaign with its budget and actual spend. Leads are attributed to a campaign
- * through {@link AdmissionEnquiry#getCampaignCode()}.
+ * through {@code AdmissionEnquiry#getCampaignCode()}.
  * Covers: US-02019 — Analyze cost-per-acquisition metrics across active marketing campaigns
  * Actor: Marketing Manager
  */

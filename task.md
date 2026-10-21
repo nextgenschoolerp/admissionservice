@@ -1,6 +1,6 @@
 # Task Execution Record: Module 02 — Admission Management, Lead CRM & Student Recruitment Pipeline
 
-Execution of the `brd-to-api` skill for **Module 02** based on [`story/module2/School_ERP_Module_02_Admissions_CRM_1000.md`](../story/module2/School_ERP_Module_02_Admissions_CRM_1000.md) and [`module2.sql`](../story/module2/module2.sql).
+Execution of the `BRD_API_Generate` skill for **Module 02** based on [`story/module2/School_ERP_Module_02_Admissions_CRM_1000.md`](../story/module2/School_ERP_Module_02_Admissions_CRM_1000.md) and [`module2.sql`](../story/module2/module2.sql).
 
 ---
 
