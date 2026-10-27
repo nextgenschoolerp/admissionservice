@@ -39,4 +39,6 @@ public class AdmissionEnquiryResponse {
     private String campaignCode;
     private Instant archivedAt;
     private Instant createdAt;
+    /** Last change to the application (stage moves, calls that update it); the Admissions outlook uses it to spot stuck applications */
+    private Instant updatedAt;
 }

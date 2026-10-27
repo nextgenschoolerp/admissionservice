@@ -251,6 +251,7 @@ public class AdmissionEnquiryService {
                 .campaignCode(entity.getCampaignCode())
                 .archivedAt(entity.getArchivedAt())
                 .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
                 .build();
     }
 }
