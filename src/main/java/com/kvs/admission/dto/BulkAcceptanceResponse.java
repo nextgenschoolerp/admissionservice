@@ -45,5 +45,8 @@ public class BulkAcceptanceResponse {
         private String providerMessageId;
         private String failureReason;
         private Instant dispatchedAt;
+        /** email copy to the guardian: SENT, FAILED (with emailDetail), or null when there is no guardian email */
+        private String emailStatus;
+        private String emailDetail;
     }
 }

@@ -1,4 +1,5 @@
 spring:
+  # No longer used for email: email is sent through Settings → Integrations (kvs.integrations below). Kept for the shared notification layer.
   mail:
     host: ${SMTP_HOST:smtp.gmail.com}
     port: ${SMTP_PORT:587}
@@ -69,6 +70,12 @@ admission:
       cron: "0 30 6 * * *"
 
 kvs:
+  # Email goes through Settings → Integrations (authservice): this service's own mailbox, else the school's main email account.
+  integrations:
+    auth-url: ${AUTH_SERVICE_URL:http://localhost:8082/authservice}
+  internal:
+    # same value as authservice kvs.internal.key: lets a scheduled job send without a signed-in user
+    key: ${KVS_INTERNAL_KEY:schoolerp-dev-internal-key}
   # Shared WhatsApp/email provider settings (ms-core com.kvs.core.notification). LOG = log only, no message is sent.
   notification:
     whatsapp:

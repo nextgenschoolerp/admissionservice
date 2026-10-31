@@ -7,6 +7,7 @@ import com.kvs.admission.entity.AdmitCard;
 import com.kvs.admission.entity.ApplicantNotification;
 import com.kvs.admission.entity.EntranceExamSchedule;
 import com.kvs.admission.enums.*;
+import com.kvs.admission.notification.AdmissionEmailCopy;
 import com.kvs.admission.notification.WhatsAppGateway;
 import com.kvs.admission.repo.AdmissionEnquiryRepository;
 import com.kvs.admission.repo.AdmitCardRepository;
@@ -39,6 +40,10 @@ public class ApplicantReminderService {
 
     private static final DateTimeFormatter MESSAGE_TIME =
             DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a").withZone(ZoneId.of("Asia/Kolkata"));
+
+    // email copy to the guardian from the Admissions mailbox (Settings → Integrations)
+    @Autowired
+    private AdmissionEmailCopy emailCopy;
 
     @Autowired
     private EntranceExamScheduleRepository examScheduleRepository;
@@ -145,12 +150,18 @@ public class ApplicantReminderService {
                     continue;
                 }
                 ApplicantNotification notification = send(exam, card, enquiry);
+                ApplicantNotification copy = emailCopy.send(enquiry, notification, exam.getExamTitle() + " reminder – application " + enquiry.getApplicationNumber());
                 if (notification.getStatus() == NotificationStatus.SENT) {
                     sent++;
                 } else {
                     failed++;
                 }
-                results.add(mapToResponse(notification, exam, card, enquiry));
+                ReminderNotificationResponse row = mapToResponse(notification, exam, card, enquiry);
+                if (copy != null) {
+                    row.setEmailStatus(copy.getStatus().name());
+                    row.setEmailDetail(copy.getStatus() == NotificationStatus.SENT ? copy.getProviderMessageId() : copy.getFailureReason());
+                }
+                results.add(row);
             }
         }
 
