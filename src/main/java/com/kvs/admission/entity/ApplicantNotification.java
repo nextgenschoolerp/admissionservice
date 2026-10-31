@@ -59,6 +59,10 @@ public class ApplicantNotification extends BaseAuditEntity {
     @Column(name = "recipient_phone", nullable = false, length = 20)
     private String recipientPhone;
 
+    /** EMAIL rows: the guardian's email address */
+    @Column(name = "recipient_email", length = 150)
+    private String recipientEmail;
+
     @Column(name = "message_body", nullable = false, length = 1000)
     private String messageBody;
 

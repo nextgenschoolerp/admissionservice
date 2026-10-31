@@ -8,6 +8,7 @@ import com.kvs.admission.entity.ApplicantNotification;
 import com.kvs.admission.entity.MeritList;
 import com.kvs.admission.entity.MeritListEntry;
 import com.kvs.admission.enums.*;
+import com.kvs.admission.notification.AdmissionEmailCopy;
 import com.kvs.admission.notification.WhatsAppGateway;
 import com.kvs.admission.repo.AdmissionEnquiryRepository;
 import com.kvs.admission.repo.AdmissionOfferRepository;
@@ -38,6 +39,10 @@ import java.util.stream.Collectors;
 public class AcceptanceNotificationService {
 
     private static final DateTimeFormatter PAY_BY = DateTimeFormatter.ofPattern("dd MMM yyyy");
+
+    // email copy to the guardian from the Admissions mailbox (Settings → Integrations)
+    @Autowired
+    private AdmissionEmailCopy emailCopy;
 
     @Autowired
     private AdmissionOfferRepository offerRepository;
@@ -128,7 +133,10 @@ public class AcceptanceNotificationService {
                 failed++;
             }
             ApplicantNotification saved = notificationRepository.save(n);
+            ApplicantNotification copy = emailCopy.send(enquiry, saved, "Admission offer " + offer.getOfferCode() + " – application " + enquiry.getApplicationNumber());
             items.add(BulkAcceptanceResponse.Item.builder()
+                    .emailStatus(copy == null ? null : copy.getStatus().name())
+                    .emailDetail(copy == null ? null : copy.getStatus() == NotificationStatus.SENT ? copy.getProviderMessageId() : copy.getFailureReason())
                     .notificationId(saved.getNotificationId())
                     .enquiryId(enquiry.getEnquiryId())
                     .applicationNumber(enquiry.getApplicationNumber())
