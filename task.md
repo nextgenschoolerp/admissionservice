@@ -138,8 +138,8 @@ Paths are under `/api/v1/admissions`. Roles are the `@PreAuthorize` of each endp
 
 ### UI mapping
 - [x] Vite proxy `/api/v1/admissions` → `http://localhost:8083/admissionservice` (`ADMISSION_SERVICE_URL`)
-- [x] Students → Admissions tab, Review application with **Next step** per stakeholder (log a call, schedule exam, record assessment, issue offer, collect deposit, enrol, not offered / withdrawn), document verify / reject, Add student (application with documents) — [`frontend/docs/admissionservice-api-mapping.md`](../frontend/docs/admissionservice-api-mapping.md)
-- [x] Workflow runners: [`/dev/admission-workflow.html`](../frontend/dev/admission-workflow.html) (enquiry → enrolled, 14 steps) and [`/dev/student-lifecycle-workflow.html`](../frontend/dev/student-lifecycle-workflow.html) (enquiry → promotion, 15 steps)
+- [x] Students → Admissions tab, Review application with **Next step** per stakeholder (log a call, schedule exam, record assessment, issue offer, collect deposit, enrol, not offered / withdrawn), document verify / reject, Add student (application with documents) — [`school_webapp/docs/admissionservice-api-mapping.md`](../school_webapp/docs/admissionservice-api-mapping.md)
+- [x] Workflow runners: [`/dev/admission-workflow.html`](../school_webapp/dev/admission-workflow.html) (enquiry → enrolled, 14 steps) and [`/dev/student-lifecycle-workflow.html`](../school_webapp/dev/student-lifecycle-workflow.html) (enquiry → promotion, 15 steps)
 
 ### Step 8: API Wiki
 - [x] [`wiki/api-docs/School_ERP_Module_02_Admissions_API_Documentation.md`](wiki/api-docs/School_ERP_Module_02_Admissions_API_Documentation.md) with `{expand}` blocks per story (US-02001 … US-02020) and the scenario actor matrix
