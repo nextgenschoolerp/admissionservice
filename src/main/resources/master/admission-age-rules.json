@@ -1,0 +1,19 @@
+{
+  "_about": "Master data: the minimum age for admission to a class, per board, counted on a cut-off date of the admission year. Loaded into admission_age_rules at startup (missing rows only). The same rows are written into database/insert.sql by database/generate-admission-rules-sql.mjs. A school overrides a rule for its own campus in Settings → Academic setup → Admission rules; its override replaces the master rule for that class. boardCode STATE means every state board. needsReview=true: a starting rule to check against the board's or the state's current admission policy.",
+  "rules": [
+    { "boardCode": "CBSE", "className": "Nursery", "minAgeYears": 3, "cutoffMonth": 3, "cutoffDay": 31, "needsReview": false },
+    { "boardCode": "CBSE", "className": "LKG", "minAgeYears": 4, "cutoffMonth": 3, "cutoffDay": 31, "needsReview": false },
+    { "boardCode": "CBSE", "className": "UKG", "minAgeYears": 5, "cutoffMonth": 3, "cutoffDay": 31, "needsReview": false },
+    { "boardCode": "CBSE", "className": "Class 1", "minAgeYears": 6, "cutoffMonth": 3, "cutoffDay": 31, "needsReview": false },
+
+    { "boardCode": "ICSE", "className": "Nursery", "minAgeYears": 3, "cutoffMonth": 3, "cutoffDay": 31, "needsReview": true },
+    { "boardCode": "ICSE", "className": "LKG", "minAgeYears": 4, "cutoffMonth": 3, "cutoffDay": 31, "needsReview": true },
+    { "boardCode": "ICSE", "className": "UKG", "minAgeYears": 5, "cutoffMonth": 3, "cutoffDay": 31, "needsReview": true },
+    { "boardCode": "ICSE", "className": "Class 1", "minAgeYears": 6, "cutoffMonth": 3, "cutoffDay": 31, "needsReview": true },
+
+    { "boardCode": "STATE", "className": "Nursery", "minAgeYears": 3, "cutoffMonth": 3, "cutoffDay": 31, "needsReview": true },
+    { "boardCode": "STATE", "className": "LKG", "minAgeYears": 4, "cutoffMonth": 3, "cutoffDay": 31, "needsReview": true },
+    { "boardCode": "STATE", "className": "UKG", "minAgeYears": 5, "cutoffMonth": 3, "cutoffDay": 31, "needsReview": true },
+    { "boardCode": "STATE", "className": "Class 1", "minAgeYears": 6, "cutoffMonth": 3, "cutoffDay": 31, "needsReview": true }
+  ]
+}

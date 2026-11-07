@@ -1,6 +1,5 @@
 package com.kvs.admission.notification;
 
-import com.kvs.admission.enums.EducationBoard;
 import com.kvs.admission.enums.TcVerificationResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -26,10 +25,10 @@ import java.util.regex.Pattern;
 @Slf4j
 public class StubEducationBoardGateway implements EducationBoardGateway {
 
-    private static final Pattern TC_NUMBER = Pattern.compile("^([A-Z_]{2,11})/(\\d{4,7})/(\\d{4})/(\\d{3,6})$");
+    private static final Pattern TC_NUMBER = Pattern.compile("^([A-Z_]{2,40})/(\\d{4,7})/(\\d{4})/(\\d{3,6})$");
 
     @Override
-    public BoardLookupResult verifyTransferCertificate(EducationBoard board, String tcNumber, String candidateName,
+    public BoardLookupResult verifyTransferCertificate(String board, String tcNumber, String candidateName,
                                                        String previousSchoolName) {
         log.info("[Board registry stub] {} lookup of TC {}", board, tcNumber);
         Matcher m = TC_NUMBER.matcher(tcNumber == null ? "" : tcNumber.trim().toUpperCase());
@@ -37,7 +36,7 @@ public class StubEducationBoardGateway implements EducationBoardGateway {
             return new BoardLookupResult(TcVerificationResult.INVALID, null, null, null,
                     "TC number does not match the " + board + " format BOARD/SCHOOLCODE/YEAR/SERIAL");
         }
-        if (!m.group(1).equals(board.name())) {
+        if (!m.group(1).equals(board)) {
             return new BoardLookupResult(TcVerificationResult.INVALID, null, null, null,
                     "TC number was issued under " + m.group(1) + ", not " + board);
         }

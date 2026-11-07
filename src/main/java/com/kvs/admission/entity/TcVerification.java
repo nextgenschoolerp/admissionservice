@@ -1,6 +1,5 @@
 package com.kvs.admission.entity;
 
-import com.kvs.admission.enums.EducationBoard;
 import com.kvs.admission.enums.TcVerificationResult;
 import com.kvs.core.entity.BaseAuditEntity;
 import jakarta.persistence.*;
@@ -41,9 +40,9 @@ public class TcVerification extends BaseAuditEntity {
     @Column(name = "document_id", nullable = false)
     private UUID documentId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "board", nullable = false, length = 20)
-    private EducationBoard board;
+    /** The issuing board: education_boards.board_code (the master list), e.g. CBSE or STATE_MH */
+    @Column(name = "board", nullable = false, length = 40)
+    private String board;
 
     @Column(name = "tc_number", nullable = false, length = 60)
     private String tcNumber;

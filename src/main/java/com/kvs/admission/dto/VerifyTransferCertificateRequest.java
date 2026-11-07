@@ -1,8 +1,7 @@
 package com.kvs.admission.dto;
 
-import com.kvs.admission.enums.EducationBoard;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,8 +15,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class VerifyTransferCertificateRequest {
 
-    @NotNull(message = "Education board is required")
-    private EducationBoard board;
+    /** The issuing board: a code of the education boards master list (CBSE, ICSE, ISC, STATE_MH, IB, ...). */
+    @NotBlank(message = "Education board is required")
+    @Pattern(regexp = "^[A-Za-z_]{2,40}$", message = "Education board must be a board code such as CBSE or STATE_MH")
+    private String board;
 
     @NotBlank(message = "TC number is required")
     @Size(max = 60, message = "TC number must not exceed 60 characters")
