@@ -1,6 +1,5 @@
 package com.kvs.admission.notification;
 
-import com.kvs.admission.enums.EducationBoard;
 import com.kvs.admission.enums.TcVerificationResult;
 
 import java.time.LocalDate;
@@ -10,7 +9,7 @@ import java.time.LocalDate;
  */
 public interface EducationBoardGateway {
 
-    BoardLookupResult verifyTransferCertificate(EducationBoard board, String tcNumber, String candidateName, String previousSchoolName);
+    BoardLookupResult verifyTransferCertificate(String board, String tcNumber, String candidateName, String previousSchoolName);
 
     record BoardLookupResult(TcVerificationResult result, String boardReference, String issuingSchool, LocalDate issueDate,
                              String message) {

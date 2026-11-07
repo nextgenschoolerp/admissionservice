@@ -50,12 +50,17 @@ public class TransferCertificateVerificationService {
     @Autowired
     private AdmissionAuditService auditService;
 
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbc;
+
     /**
      * Looks the certificate up with the board. VALID verifies the vault document, INVALID rejects it,
      * NOT_FOUND leaves it pending for a manual check. Every lookup is recorded.
      */
     @Transactional
     public TcVerificationResponse verify(UUID enquiryId, VerifyTransferCertificateRequest request) {
+        // the board is checked first: a board that is not on the master list is refused before anything is looked up
+        String board = board(request.getBoard());
         AdmissionEnquiry enquiry = admissionEnquiryRepository.findByEnquiryId(enquiryId)
                 .orElseThrow(() -> new ResourceNotFoundException("AdmissionEnquiry", "enquiryId", enquiryId));
         ApplicantDocument tc = documentRepository.findByEnquiryIdAndDocumentType(enquiryId, DocumentType.TRANSFER_CERTIFICATE)
@@ -67,7 +72,7 @@ public class TransferCertificateVerificationService {
 
         String candidate = enquiry.getCandidateFirstName() + " " + enquiry.getCandidateLastName();
         EducationBoardGateway.BoardLookupResult lookup = boardGateway.verifyTransferCertificate(
-                request.getBoard(), request.getTcNumber().trim().toUpperCase(), candidate, request.getPreviousSchoolName());
+                board, request.getTcNumber().trim().toUpperCase(), candidate, request.getPreviousSchoolName());
         String checker = SecurityUtils.getCurrentUserEmail().orElse("front_office_counselor");
         Instant now = Instant.now();
 
@@ -75,7 +80,7 @@ public class TransferCertificateVerificationService {
         verification.setTenantId(enquiry.getTenantId());
         verification.setEnquiryId(enquiryId);
         verification.setDocumentId(tc.getDocumentId());
-        verification.setBoard(request.getBoard());
+        verification.setBoard(board);
         verification.setTcNumber(request.getTcNumber().trim().toUpperCase());
         verification.setPreviousSchoolName(request.getPreviousSchoolName());
         verification.setResult(lookup.result());
@@ -92,13 +97,13 @@ public class TransferCertificateVerificationService {
             tc.setVerifiedByUserId(checker);
             tc.setVerifiedAt(now);
             tc.setVerificationNotes(valid
-                    ? "Verified with the " + request.getBoard() + " registry, reference " + lookup.boardReference()
+                    ? "Verified with the " + board + " registry, reference " + lookup.boardReference()
                     : "Board check failed: " + lookup.message());
             documentRepository.save(tc);
         }
 
         auditService.logSuccess("tc_verification:" + enquiry.getTenantId(), "VERIFY_TRANSFER_CERTIFICATE",
-                request.getBoard() + " lookup of TC " + saved.getTcNumber() + " for " + enquiry.getApplicationNumber()
+                board + " lookup of TC " + saved.getTcNumber() + " for " + enquiry.getApplicationNumber()
                         + " | Result: " + lookup.result() + (lookup.boardReference() != null ? " | Ref: " + lookup.boardReference() : ""));
         return map(saved, enquiry, tc.getVerificationStatus());
     }
@@ -116,13 +121,22 @@ public class TransferCertificateVerificationService {
                 .map(v -> map(v, enquiry, current)).toList();
     }
 
+    /** The issuing board as a code of the education boards master list (the old STATE_BOARD means a state board not named). */
+    private String board(String requested) {
+        String code = requested.trim().toUpperCase(java.util.Locale.ROOT);
+        if (code.equals("STATE_BOARD")) code = "STATE_OTHER";
+        Integer known = jdbc.queryForObject("SELECT count(*) FROM education_boards WHERE board_code = ?", Integer.class, code);
+        if (known == null || known == 0) throw new BadRequestException("Unknown education board: " + requested + ". Choose a board of the school's list.");
+        return code;
+    }
+
     private TcVerificationResponse map(TcVerification v, AdmissionEnquiry enquiry, DocumentVerificationStatus documentStatus) {
         return TcVerificationResponse.builder()
                 .verificationId(v.getVerificationId())
                 .enquiryId(v.getEnquiryId())
                 .applicationNumber(enquiry.getApplicationNumber())
                 .documentId(v.getDocumentId())
-                .board(v.getBoard().name())
+                .board(v.getBoard())
                 .tcNumber(v.getTcNumber())
                 .previousSchoolName(v.getPreviousSchoolName())
                 .result(v.getResult().name())
