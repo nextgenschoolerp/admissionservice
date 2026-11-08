@@ -70,6 +70,12 @@ admission:
       cron: "0 30 6 * * *"
 
 kvs:
+  # Schema-per-school routing (database/tenant-split, school_webapp/docs/tenant-schema-split-plan.md).
+  # Leave off until the database has been split; when on, Hibernate ddl-auto is forced to none.
+  tenancy:
+    enabled: ${KVS_TENANCY_ENABLED:false}
+    schema-map: ${KVS_TENANCY_SCHEMA_MAP:a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11=dpsdata,b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22=svmtdata,5eed0001-0000-4000-8000-000000000003=gmetdata}
+    common-schema: ${KVS_TENANCY_COMMON_SCHEMA:common}
   # Email goes through Settings → Integrations (authservice): this service's own mailbox, else the school's main email account.
   integrations:
     auth-url: ${AUTH_SERVICE_URL:http://localhost:8082/authservice}
