@@ -8,6 +8,8 @@ import com.kvs.core.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -64,6 +66,26 @@ public class ApplicantDocumentController {
             @PathVariable("enquiryId") UUID enquiryId) {
         log.info("Request to list vault documents for enquiry: {}", enquiryId);
         return ResponseEntity.ok(ApiResponse.success(documentService.listDocuments(enquiryId)));
+    }
+
+    /**
+     * Download one vault document's file (used to copy it to the student profile on enrolment).
+     *
+     * @param enquiryId  the enquiry UUID
+     * @param documentId the document UUID
+     * @return 200 OK with the file bytes
+     */
+    @GetMapping("/enquiries/{enquiryId}/documents/{documentId}/file")
+    @PreAuthorize("hasAnyRole('ENTRANCE_EXAM_EVALUATOR', 'REGISTRAR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    public ResponseEntity<byte[]> downloadDocument(
+            @PathVariable("enquiryId") UUID enquiryId,
+            @PathVariable("documentId") UUID documentId) {
+        ApplicantDocumentService.VaultFile file = documentService.readFile(enquiryId, documentId);
+        MediaType type = file.contentType() != null ? MediaType.parseMediaType(file.contentType()) : MediaType.APPLICATION_OCTET_STREAM;
+        return ResponseEntity.ok()
+                .contentType(type)
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline().filename(file.fileName()).build().toString())
+                .body(file.bytes());
     }
 
     /**
