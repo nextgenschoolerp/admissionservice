@@ -121,13 +121,29 @@ public class TransferCertificateVerificationService {
                 .map(v -> map(v, enquiry, current)).toList();
     }
 
-    /** The issuing board as a code of the education boards master list (the old STATE_BOARD means a state board not named). */
+    /** The board used when the request does not name one. */
+    static final String DEFAULT_BOARD = "CBSE";
+
+    /**
+     * The issuing board as a code of the education boards master list (the old STATE_BOARD means a state board not named).
+     * No board given means CBSE; CBSE is accepted even when the master list is not there or is empty.
+     */
     private String board(String requested) {
-        String code = requested.trim().toUpperCase(java.util.Locale.ROOT);
+        String code = requested == null || requested.isBlank() ? DEFAULT_BOARD : requested.trim().toUpperCase(java.util.Locale.ROOT);
         if (code.equals("STATE_BOARD")) code = "STATE_OTHER";
+        if (code.equals(DEFAULT_BOARD) && !boardListHasEntries()) return code;
         Integer known = jdbc.queryForObject("SELECT count(*) FROM education_boards WHERE board_code = ?", Integer.class, code);
         if (known == null || known == 0) throw new BadRequestException("Unknown education board: " + requested + ". Choose a board of the school's list.");
         return code;
+    }
+
+    /** True when the education_boards table exists and holds at least one board (checked without a failing query, so the transaction stays usable). */
+    private boolean boardListHasEntries() {
+        Integer tables = jdbc.queryForObject(
+                "SELECT count(*) FROM information_schema.tables WHERE lower(table_name) = 'education_boards'", Integer.class);
+        if (tables == null || tables == 0) return false;
+        Integer boards = jdbc.queryForObject("SELECT count(*) FROM education_boards", Integer.class);
+        return boards != null && boards > 0;
     }
 
     private TcVerificationResponse map(TcVerification v, AdmissionEnquiry enquiry, DocumentVerificationStatus documentStatus) {

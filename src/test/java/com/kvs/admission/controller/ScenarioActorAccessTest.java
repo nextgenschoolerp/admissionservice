@@ -162,7 +162,7 @@ class ScenarioActorAccessTest extends AdmissionControllerTestSupport {
             case "FEE_WAIVER_DECISION" -> patch(base + "/fee-waivers/" + ID + "/decision").contentType(MediaType.APPLICATION_JSON)
                     .content(json(new FeeWaiverDecisionRequest(WaiverStatus.APPROVED, null)));
             case "TC_VERIFICATION" -> jsonPost(base + "/enquiries/" + ID + "/transfer-certificate/verifications",
-                    new VerifyTransferCertificateRequest(EducationBoard.CBSE, "CBSE/2730125/2026/004512", "St. Mary's School"));
+                    new VerifyTransferCertificateRequest("CBSE", "CBSE/2730125/2026/004512", "St. Mary's School"));
             case "BULK_ACCEPTANCE" -> jsonPost(base + "/acceptance-notifications",
                     new BulkAcceptanceRequest("tenant-001", "branch-001", "AY-2026-27", "GRADE-06", null));
             case "COST_PER_ACQUISITION" -> get(base + "/analytics/cost-per-acquisition").param("tenantId", "tenant-001");

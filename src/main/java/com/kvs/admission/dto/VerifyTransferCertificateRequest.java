@@ -15,8 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class VerifyTransferCertificateRequest {
 
-    /** The issuing board: a code of the education boards master list (CBSE, ICSE, ISC, STATE_MH, IB, ...). */
-    @NotBlank(message = "Education board is required")
+    /** The issuing board: a code of the education boards master list (CBSE, ICSE, ISC, STATE_MH, IB, ...). Optional: CBSE when not given. */
     @Pattern(regexp = "^[A-Za-z_]{2,40}$", message = "Education board must be a board code such as CBSE or STATE_MH")
     private String board;
 

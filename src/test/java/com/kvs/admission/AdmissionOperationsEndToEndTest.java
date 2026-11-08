@@ -183,19 +183,21 @@ class AdmissionOperationsEndToEndTest {
                 .andExpect(jsonPath("$.data.newlyFlagged").value(3));
 
         String tcVerify = "/api/v1/admissions/enquiries/" + asha + "/transfer-certificate/verifications";
-        perform(post(tcVerify), counselor, new VerifyTransferCertificateRequest(EducationBoard.CBSE, "CBSE/2730125/2026/004512", null))
+        perform(post(tcVerify), counselor, new VerifyTransferCertificateRequest(null, "CBSE/2730125/2026/004512", null))
                 .andExpect(status().isBadRequest()); // TC not uploaded yet
         upload(evaluator, ashaDocs, DocumentType.TRANSFER_CERTIFICATE);
-        perform(post(tcVerify), counselor, new VerifyTransferCertificateRequest(EducationBoard.CBSE, "TC-2026-17", null))
+        perform(post(tcVerify), counselor, new VerifyTransferCertificateRequest(null, "TC-2026-17", null))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.result").value("INVALID"))
                 .andExpect(jsonPath("$.data.documentVerificationStatus").value("REJECTED"));
         upload(evaluator, ashaDocs, DocumentType.TRANSFER_CERTIFICATE); // a rejected document may be replaced
-        perform(post(tcVerify), counselor, new VerifyTransferCertificateRequest(EducationBoard.CBSE, "CBSE/2730125/2026/004512", "St. Mary's"))
+        // No board in the request: CBSE is the default
+        perform(post(tcVerify), counselor, new VerifyTransferCertificateRequest(null, "CBSE/2730125/2026/004512", "St. Mary's"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.board").value("CBSE"))
                 .andExpect(jsonPath("$.data.result").value("VALID"))
                 .andExpect(jsonPath("$.data.documentVerificationStatus").value("VERIFIED"));
-        perform(post(tcVerify), counselor, new VerifyTransferCertificateRequest(EducationBoard.CBSE, "CBSE/2730125/2026/004512", null))
+        perform(post(tcVerify), counselor, new VerifyTransferCertificateRequest(null, "CBSE/2730125/2026/004512", null))
                 .andExpect(status().isConflict());
         perform(patch("/api/v1/admissions/documents/" + birthCertificate + "/verification"), registrar,
                 new VerifyDocumentRequest(DocumentVerificationStatus.VERIFIED, "Original sighted"))
