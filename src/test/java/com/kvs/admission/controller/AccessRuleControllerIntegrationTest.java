@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.core.rbac.AccessRuleController;
 import com.kvs.core.service.JwtTokenService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 
 /**
- * Integration tests for {@link AccessRuleController}: endpoint → allowed roles, read from the running service.
+ * Integration tests for the shared ms-core {@link AccessRuleController} as this service configures it: endpoint → allowed roles.
  */
 @SpringBootTest
 @AutoConfigureMockMvc

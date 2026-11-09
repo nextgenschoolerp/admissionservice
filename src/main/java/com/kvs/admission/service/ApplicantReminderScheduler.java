@@ -1,5 +1,6 @@
 package com.kvs.admission.service;
 
+import com.kvs.core.tenancy.TenantJobs;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,15 +22,16 @@ public class ApplicantReminderScheduler {
     @Autowired
     private ApplicantReminderService reminderService;
 
+    @Autowired
+    private TenantJobs tenantJobs;
+
     @Value("${admission.reminders.auto-dispatch.lookahead-hours:24}")
     private int lookaheadHours;
 
+    /** Runs once per school (each school's exams are in its own schema), or once for all when schema routing is off. */
     @Scheduled(cron = "${admission.reminders.auto-dispatch.cron:0 0 * * * *}")
     public void dispatchDueReminders() {
-        try {
-            reminderService.dispatchAllDueReminders(lookaheadHours);
-        } catch (Exception e) {
-            log.error("Automatic entrance evaluation reminder dispatch failed", e);
-        }
+        tenantJobs.forEachSchool("Automatic entrance evaluation reminder dispatch",
+                tenantId -> reminderService.dispatchAllDueReminders(lookaheadHours));
     }
 }

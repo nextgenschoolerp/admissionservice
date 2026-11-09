@@ -1,5 +1,6 @@
 package com.kvs.admission.service;
 
+import com.kvs.core.tenancy.TenantJobs;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,13 +21,15 @@ public class WaitlistEscalationScheduler {
     @Autowired
     private WaitlistService waitlistService;
 
+    @Autowired
+    private TenantJobs tenantJobs;
+
+    /** Runs once per school (each school's waitlists are in its own schema), or once for all when schema routing is off. */
     @Scheduled(cron = "${admission.waitlist.auto-escalation.cron:0 30 6 * * *}")
     public void escalate() {
-        try {
+        tenantJobs.forEachSchool("Automatic waitlist escalation", tenantId -> {
             int issued = waitlistService.escalateAllAutomatic();
-            log.info("Automatic waitlist escalation issued {} offers", issued);
-        } catch (Exception e) {
-            log.error("Automatic waitlist escalation failed", e);
-        }
+            log.info("Automatic waitlist escalation issued {} offers{}", issued, tenantId == null ? "" : " for school " + tenantId);
+        });
     }
 }

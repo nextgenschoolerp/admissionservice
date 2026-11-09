@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.BulkAcceptanceRequest;
 import com.kvs.admission.dto.BulkAcceptanceResponse;
 import com.kvs.admission.service.AcceptanceNotificationService;
@@ -32,7 +33,7 @@ public class AcceptanceNotificationController {
      * Notify every applicant holding a live offer in the grade (US-02018).
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.WAITLISTS_MANAGE)
     public ResponseEntity<ApiResponse<BulkAcceptanceResponse>> notifyPool(@Valid @RequestBody BulkAcceptanceRequest request) {
         log.info("Request to send acceptance notifications for grade {} ({})", request.getGradeId(), request.getAcademicYearId());
         return ResponseEntity.ok(ApiResponse.success("Acceptance notifications dispatched", acceptanceService.notifyPool(request)));

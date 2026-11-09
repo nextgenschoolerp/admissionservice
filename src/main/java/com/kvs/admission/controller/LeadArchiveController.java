@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.ArchiveLeadsRequest;
 import com.kvs.admission.dto.ArchiveLeadsResponse;
 import com.kvs.admission.dto.ArchivedLeadTrendResponse;
@@ -33,7 +34,7 @@ public class LeadArchiveController {
      * Archive rejected (and withdrawn) leads that have been closed long enough (US-02020).
      */
     @PostMapping("/lead-archives")
-    @PreAuthorize("hasAnyRole('SCHOOL_PRINCIPAL', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.LEAD_ARCHIVES_MANAGE)
     public ResponseEntity<ApiResponse<ArchiveLeadsResponse>> archive(@Valid @RequestBody ArchiveLeadsRequest request) {
         log.info("Request to archive closed leads for tenant {}", request.getTenantId());
         return ResponseEntity.ok(ApiResponse.success("Closed leads archived", archiveService.archive(request)));
@@ -43,7 +44,7 @@ public class LeadArchiveController {
      * Monthly trend of archived leads.
      */
     @GetMapping("/analytics/archived-lead-trends")
-    @PreAuthorize("hasAnyRole('SCHOOL_PRINCIPAL', 'ADMISSION_OFFICER', 'MARKETING_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.ANALYTICS_VIEW)
     public ResponseEntity<ApiResponse<ArchivedLeadTrendResponse>> trends(
             @RequestParam("tenantId") String tenantId,
             @RequestParam(value = "fromDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,

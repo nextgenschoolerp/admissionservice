@@ -88,6 +88,21 @@ public class DocumentVaultStorage {
     }
 
     /**
+     * Reads a stored file by its vault-relative path (the path returned by {@link #store}).
+     */
+    public byte[] read(String relativePath) {
+        Path target = basePath.resolve(relativePath).normalize();
+        if (!target.startsWith(basePath)) {
+            throw new BadRequestException("Invalid document storage path");
+        }
+        try {
+            return Files.readAllBytes(target);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to read document from vault", e);
+        }
+    }
+
+    /**
      * Best-effort removal of a previously stored file (used when a document is replaced).
      */
     public void delete(String relativePath) {

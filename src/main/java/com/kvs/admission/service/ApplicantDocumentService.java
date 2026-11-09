@@ -113,6 +113,24 @@ public class ApplicantDocumentService {
         return mapToResponse(saved, enquiry);
     }
 
+    /** A stored document's file, ready to download. */
+    public record VaultFile(String fileName, String contentType, byte[] bytes) {}
+
+    /**
+     * Reads one document's file from the vault, so it can be copied to a student profile on enrolment.
+     *
+     * @param enquiryId the enquiry the document belongs to
+     * @param documentId the document UUID
+     * @return the file name, content type and bytes
+     */
+    @Transactional(readOnly = true)
+    public VaultFile readFile(UUID enquiryId, UUID documentId) {
+        ApplicantDocument document = documentRepository.findByDocumentId(documentId)
+                .filter(d -> enquiryId.equals(d.getEnquiryId()))
+                .orElseThrow(() -> new ResourceNotFoundException("ApplicantDocument", "documentId", documentId));
+        return new VaultFile(document.getOriginalFileName(), document.getContentType(), vaultStorage.read(document.getFilePath()));
+    }
+
     /**
      * Lists all vault documents of an enquiry.
      *

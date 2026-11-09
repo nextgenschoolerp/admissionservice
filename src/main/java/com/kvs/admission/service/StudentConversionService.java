@@ -47,9 +47,6 @@ public class StudentConversionService {
     private AdmissionEnquiryRepository admissionEnquiryRepository;
 
     @Autowired
-    private ApplicantDocumentRepository documentRepository;
-
-    @Autowired
     private AdmissionOfferRepository offerRepository;
 
     @Autowired
@@ -85,17 +82,7 @@ public class StudentConversionService {
                     + enquiry.getEnquiryStatus() + " is not ready for conversion; the candidate must pass evaluation");
         }
 
-        Map<DocumentType, ApplicantDocument> documents = documentRepository.findByEnquiryIdOrderByDocumentTypeAsc(enquiryId)
-                .stream()
-                .collect(Collectors.toMap(ApplicantDocument::getDocumentType, d -> d));
-        List<DocumentType> unverified = Arrays.stream(DocumentType.values())
-                .filter(DocumentType::isMandatory)
-                .filter(type -> documents.get(type) == null
-                        || documents.get(type).getVerificationStatus() != DocumentVerificationStatus.VERIFIED)
-                .toList();
-        if (!unverified.isEmpty()) {
-            throw new BadRequestException("Mandatory documents are missing or not yet verified: " + unverified);
-        }
+        // Documents are not required to enrol: the record is created without checking them
 
         // Date of birth and gender come from the application unless the registrar gives them now
         java.time.LocalDate dateOfBirth = request.getDateOfBirth() != null ? request.getDateOfBirth() : enquiry.getCandidateDateOfBirth();

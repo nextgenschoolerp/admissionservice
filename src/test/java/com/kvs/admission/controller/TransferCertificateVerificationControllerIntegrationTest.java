@@ -2,7 +2,6 @@ package com.kvs.admission.controller;
 
 import com.kvs.admission.dto.TcVerificationResponse;
 import com.kvs.admission.dto.VerifyTransferCertificateRequest;
-import com.kvs.admission.enums.EducationBoard;
 import com.kvs.core.exception.BadRequestException;
 import com.kvs.core.exception.ConflictException;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +26,7 @@ class TransferCertificateVerificationControllerIntegrationTest extends Admission
     private static final String URL = "/api/v1/admissions/enquiries/" + ENQUIRY + "/transfer-certificate/verifications";
 
     private String body() throws Exception {
-        return json(new VerifyTransferCertificateRequest(EducationBoard.CBSE, "CBSE/2730125/2026/004512", "St. Mary's Convent School"));
+        return json(new VerifyTransferCertificateRequest("CBSE", "CBSE/2730125/2026/004512", "St. Mary's Convent School"));
     }
 
     @Test
@@ -43,14 +42,14 @@ class TransferCertificateVerificationControllerIntegrationTest extends Admission
     }
 
     @Test
-    @DisplayName("POST verification - Unknown board value and blank TC number return 400")
+    @DisplayName("POST verification - A board that is not a board code and a blank TC number return 400")
     void verify_ValidationFailure() throws Exception {
         mockMvc.perform(post(URL).header("Authorization", bearer("FRONT_OFFICE_COUNSELOR")).contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"board\":\"NIOS_XYZ\",\"tcNumber\":\"CBSE/1/2026/1\"}"))
+                        .content("{\"board\":\"NIOS-2026\",\"tcNumber\":\"CBSE/1/2026/1\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value("MALFORMED_REQUEST"));
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_FAILED"));
         mockMvc.perform(post(URL).header("Authorization", bearer("FRONT_OFFICE_COUNSELOR")).contentType(MediaType.APPLICATION_JSON)
-                        .content(json(new VerifyTransferCertificateRequest(EducationBoard.ICSE, " ", null))))
+                        .content(json(new VerifyTransferCertificateRequest("ICSE", " ", null))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("VALIDATION_FAILED"));
     }

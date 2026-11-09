@@ -200,24 +200,20 @@ class AdmissionPipelineEndToEndTest {
                         .header("Authorization", evaluator))
                 .andExpect(status().isBadRequest()); // content does not match declared type
         String birthCertId = uploadPdf(evaluator, docsUrl, DocumentType.BIRTH_CERTIFICATE);
-        String transferCertId = uploadPdf(evaluator, docsUrl, DocumentType.TRANSFER_CERTIFICATE);
+        // The transfer certificate is uploaded but left PENDING: documents are not required to enrol (checked at conversion below)
+        uploadPdf(evaluator, docsUrl, DocumentType.TRANSFER_CERTIFICATE);
 
         String ashaParent = token(ashaParentEmail, "APPLICANT_PARENT");
         ConvertLeadRequest conversion = new ConvertLeadRequest(LocalDate.of(2014, 6, 1), Gender.FEMALE);
         String conversionUrl = "/api/v1/admissions/enquiries/" + asha + "/student-conversion";
-        perform(post(conversionUrl), ashaParent, conversion)
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("not yet verified")));
 
         perform(patch("/api/v1/admissions/documents/" + birthCertId + "/verification"), registrar,
                 new VerifyDocumentRequest(DocumentVerificationStatus.REJECTED, null))
                 .andExpect(status().isBadRequest()); // rejection needs notes
-        for (String documentId : List.of(birthCertId, transferCertId)) {
-            perform(patch("/api/v1/admissions/documents/" + documentId + "/verification"), registrar,
-                    new VerifyDocumentRequest(DocumentVerificationStatus.VERIFIED, "Original sighted"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.verificationStatus").value("VERIFIED"));
-        }
+        perform(patch("/api/v1/admissions/documents/" + birthCertId + "/verification"), registrar,
+                new VerifyDocumentRequest(DocumentVerificationStatus.VERIFIED, "Original sighted"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.verificationStatus").value("VERIFIED"));
         try (var files = Files.walk(VAULT_DIR)) {
             assertThat(files.filter(Files::isRegularFile).count()).isGreaterThanOrEqualTo(2);
         }
@@ -265,7 +261,8 @@ class AdmissionPipelineEndToEndTest {
         // --- US-02005: conversion into Student Master record -----------------------------------------
         String otherParent = token("someone.else." + run + "@example.com", "APPLICANT_PARENT");
         perform(post(conversionUrl), otherParent, conversion).andExpect(status().isForbidden());
-        // No date of birth or gender in the request: both come from the application
+        // No date of birth or gender in the request: both come from the application.
+        // The transfer certificate is still PENDING: an unverified document does not block enrolment.
         MvcResult student = perform(post(conversionUrl), ashaParent, new ConvertLeadRequest())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.status").value("ACTIVE"))

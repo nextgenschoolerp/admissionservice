@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.ConvertLeadRequest;
 import com.kvs.admission.dto.StudentMasterRecordResponse;
 import com.kvs.admission.service.StudentConversionService;
@@ -36,7 +37,7 @@ public class StudentConversionController {
      * @return 201 Created with the student record
      */
     @PostMapping("/enquiries/{enquiryId}/student-conversion")
-    @PreAuthorize("hasAnyRole('APPLICANT_PARENT', 'FRONT_OFFICE_COUNSELOR', 'ADMISSION_OFFICER', 'REGISTRAR', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.ENQUIRIES_3_MANAGE)
     public ResponseEntity<ApiResponse<StudentMasterRecordResponse>> convertLead(
             @PathVariable("enquiryId") UUID enquiryId,
             @Valid @RequestBody(required = false) ConvertLeadRequest request) {
@@ -53,7 +54,7 @@ public class StudentConversionController {
      * @return 200 OK with the student record
      */
     @GetMapping("/students/{studentId}")
-    @PreAuthorize("hasAnyRole('APPLICANT_PARENT', 'FRONT_OFFICE_COUNSELOR', 'ADMISSION_OFFICER', 'REGISTRAR', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.STUDENTS_VIEW)
     public ResponseEntity<ApiResponse<StudentMasterRecordResponse>> getStudent(
             @PathVariable("studentId") UUID studentId) {
         log.info("Request to fetch Student Master record: {}", studentId);

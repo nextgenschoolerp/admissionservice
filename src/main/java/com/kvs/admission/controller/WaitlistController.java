@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.*;
 import com.kvs.admission.service.WaitlistService;
 import com.kvs.core.dto.ApiResponse;
@@ -31,7 +32,7 @@ public class WaitlistController {
      * Create or update the seat capacity and escalation rule of a grade.
      */
     @PutMapping("/rules")
-    @PreAuthorize("hasAnyRole('ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.WAITLISTS_MANAGE)
     public ResponseEntity<ApiResponse<WaitlistResponse>> saveRule(@Valid @RequestBody WaitlistRuleRequest request) {
         log.info("Request to save waitlist rule for grade {} ({})", request.getGradeId(), request.getAcademicYearId());
         return ResponseEntity.ok(ApiResponse.success("Waitlist rule saved", waitlistService.saveRule(request)));
@@ -41,7 +42,7 @@ public class WaitlistController {
      * View a grade waitlist with seat occupancy and queue positions.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMISSION_OFFICER', 'REGISTRAR', 'SCHOOL_PRINCIPAL', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.MERIT_LISTS_VIEW)
     public ResponseEntity<ApiResponse<WaitlistResponse>> get(@RequestParam("tenantId") String tenantId,
                                                              @RequestParam("branchId") String branchId,
                                                              @RequestParam("academicYearId") String academicYearId,
@@ -53,7 +54,7 @@ public class WaitlistController {
      * Add an evaluated candidate to their grade waitlist.
      */
     @PostMapping("/entries")
-    @PreAuthorize("hasAnyRole('ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.WAITLISTS_MANAGE)
     public ResponseEntity<ApiResponse<WaitlistEntryResponse>> add(@Valid @RequestBody AddToWaitlistRequest request) {
         log.info("Request to waitlist enquiry {}", request.getEnquiryId());
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -64,7 +65,7 @@ public class WaitlistController {
      * Remove a waiting candidate from the queue.
      */
     @DeleteMapping("/entries/{entryId}")
-    @PreAuthorize("hasAnyRole('ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.WAITLISTS_MANAGE)
     public ResponseEntity<ApiResponse<WaitlistEntryResponse>> remove(@PathVariable("entryId") UUID entryId,
                                                                      @RequestParam(value = "reason", required = false) String reason) {
         log.info("Request to remove waitlist entry {}", entryId);
@@ -76,7 +77,7 @@ public class WaitlistController {
      * Release lapsed offers and offer the free seats to the top of the queue (US-02014).
      */
     @PostMapping("/escalation")
-    @PreAuthorize("hasAnyRole('ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.WAITLISTS_MANAGE)
     public ResponseEntity<ApiResponse<WaitlistEscalationResponse>> escalate(@Valid @RequestBody WaitlistScopeRequest request) {
         log.info("Request to escalate waitlist of grade {} ({})", request.getGradeId(), request.getAcademicYearId());
         return ResponseEntity.ok(ApiResponse.success("Waitlist escalation finished", waitlistService.escalate(request)));

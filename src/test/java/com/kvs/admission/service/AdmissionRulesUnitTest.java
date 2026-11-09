@@ -208,15 +208,15 @@ class AdmissionRulesUnitTest {
 
         @Test
         void deterministicResults() {
-            EducationBoardGateway.BoardLookupResult valid = gateway.verifyTransferCertificate(EducationBoard.CBSE,
+            EducationBoardGateway.BoardLookupResult valid = gateway.verifyTransferCertificate("CBSE",
                     "CBSE/2730125/2026/004512", "Aarav Sharma", "St. Mary's School");
             assertThat(valid.result()).isEqualTo(TcVerificationResult.VALID);
             assertThat(valid.boardReference()).isEqualTo("CBSE-REG-2730125-004512");
-            assertThat(gateway.verifyTransferCertificate(EducationBoard.CBSE, "TC-12345", null, null).result())
+            assertThat(gateway.verifyTransferCertificate("CBSE", "TC-12345", null, null).result())
                     .isEqualTo(TcVerificationResult.INVALID);
-            assertThat(gateway.verifyTransferCertificate(EducationBoard.ICSE, "CBSE/2730125/2026/004512", null, null).message())
+            assertThat(gateway.verifyTransferCertificate("ICSE", "CBSE/2730125/2026/004512", null, null).message())
                     .contains("issued under CBSE");
-            assertThat(gateway.verifyTransferCertificate(EducationBoard.ICSE, "ICSE/880123/2025/120000", null, null).result())
+            assertThat(gateway.verifyTransferCertificate("ICSE", "ICSE/880123/2025/120000", null, null).result())
                     .isEqualTo(TcVerificationResult.NOT_FOUND);
         }
     }

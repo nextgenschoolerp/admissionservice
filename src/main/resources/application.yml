@@ -70,12 +70,27 @@ admission:
       cron: "0 30 6 * * *"
 
 kvs:
+  # Schema-per-school routing (database/tenant-split, school_webapp/docs/tenant-schema-split-plan.md).
+  # Leave off until the database has been split; when on, Hibernate ddl-auto is forced to none.
+  tenancy:
+    enabled: ${KVS_TENANCY_ENABLED:false}
+    schema-map: ${KVS_TENANCY_SCHEMA_MAP:a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11=dpsdata,b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22=svmtdata,5eed0001-0000-4000-8000-000000000003=gmetdata}
+    common-schema: ${KVS_TENANCY_COMMON_SCHEMA:common}
   # Email goes through Settings → Integrations (authservice): this service's own mailbox, else the school's main email account.
   integrations:
     auth-url: ${AUTH_SERVICE_URL:http://localhost:8082/authservice}
   internal:
     # same value as authservice kvs.internal.key: lets a scheduled job send without a signed-in user
     key: ${KVS_INTERNAL_KEY:schoolerp-dev-internal-key}
+  # RBAC (school_webapp/docs/rbac-migration-log.md): endpoints check permission codes (config/AdmissionPerms);
+  # ms-core loads each school's role → permission map from authservice (GET /internal/v1/role-grants, internal key above).
+  rbac:
+    resolver: ${KVS_RBAC_RESOLVER:http}
+    authservice-url: ${AUTH_SERVICE_URL:http://localhost:8082/authservice}
+  # Shared GET …/access-rules (ms-core): endpoints with the permissions and roles their @PreAuthorize allows
+  access-rules:
+    path: /api/v1/admissions/access-rules
+    base-package: com.kvs.admission
   # Shared WhatsApp/email provider settings (ms-core com.kvs.core.notification). LOG = log only, no message is sent.
   notification:
     whatsapp:

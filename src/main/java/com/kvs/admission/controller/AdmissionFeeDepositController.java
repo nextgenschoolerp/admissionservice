@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.CollectDepositRequest;
 import com.kvs.admission.dto.DepositReceiptResponse;
 import com.kvs.admission.service.AdmissionFeeDepositService;
@@ -36,7 +37,7 @@ public class AdmissionFeeDepositController {
      * @return 201 Created with the digital receipt
      */
     @PostMapping("/offers/{offerId}/deposits")
-    @PreAuthorize("hasAnyRole('SCHOOL_PRINCIPAL', 'FINANCE_CASHIER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.OFFERS_2_MANAGE)
     public ResponseEntity<ApiResponse<DepositReceiptResponse>> collectDeposit(
             @PathVariable("offerId") UUID offerId,
             @Valid @RequestBody CollectDepositRequest request) {
@@ -53,7 +54,7 @@ public class AdmissionFeeDepositController {
      * @return 200 OK with the receipt
      */
     @GetMapping("/deposits/receipts/{receiptNumber}")
-    @PreAuthorize("hasAnyRole('SCHOOL_PRINCIPAL', 'FINANCE_CASHIER', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.DEPOSITS_VIEW)
     public ResponseEntity<ApiResponse<DepositReceiptResponse>> getReceipt(
             @PathVariable("receiptNumber") String receiptNumber) {
         log.info("Request to fetch deposit receipt: {}", receiptNumber);
