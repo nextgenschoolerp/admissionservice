@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.GenerateMeritListRequest;
 import com.kvs.admission.dto.MeritListResponse;
 import com.kvs.admission.service.MeritListService;
@@ -40,7 +41,7 @@ public class MeritListController {
      * @return 201 Created with the merit list
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.WAITLISTS_MANAGE)
     public ResponseEntity<ApiResponse<MeritListResponse>> generateMeritList(
             @Valid @RequestBody GenerateMeritListRequest request) {
         log.info("Request to generate merit list for grade {} / year {}",
@@ -57,7 +58,7 @@ public class MeritListController {
      * @return 200 OK with the ranked entries
      */
     @GetMapping("/{meritListId}")
-    @PreAuthorize("hasAnyRole('ADMISSION_OFFICER', 'REGISTRAR', 'SCHOOL_PRINCIPAL', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.MERIT_LISTS_VIEW)
     public ResponseEntity<ApiResponse<MeritListResponse>> getMeritList(@PathVariable("meritListId") UUID meritListId) {
         log.info("Request to fetch merit list: {}", meritListId);
         return ResponseEntity.ok(ApiResponse.success(meritListService.getMeritList(meritListId)));
@@ -72,7 +73,7 @@ public class MeritListController {
      */
     // No "produces" here: error responses must still be able to render as JSON
     @GetMapping("/{meritListId}/pdf")
-    @PreAuthorize("hasAnyRole('ENTRANCE_EXAM_EVALUATOR', 'SCHOOL_PRINCIPAL', 'ADMISSION_OFFICER', 'REGISTRAR', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.MERIT_LISTS_2_VIEW)
     public ResponseEntity<byte[]> exportPdf(@PathVariable("meritListId") UUID meritListId,
                                             @RequestParam(value = "fullNames", defaultValue = "false") boolean fullNames) {
         log.info("Request to export merit list {} as PDF (fullNames={})", meritListId, fullNames);

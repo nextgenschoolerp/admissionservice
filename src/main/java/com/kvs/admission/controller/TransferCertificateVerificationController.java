@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.TcVerificationResponse;
 import com.kvs.admission.dto.VerifyTransferCertificateRequest;
 import com.kvs.admission.service.TransferCertificateVerificationService;
@@ -32,7 +33,7 @@ public class TransferCertificateVerificationController {
      * Check the uploaded transfer certificate with the issuing board (US-02017).
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('FRONT_OFFICE_COUNSELOR', 'REGISTRAR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.ENQUIRIES_4_MANAGE)
     public ResponseEntity<ApiResponse<TcVerificationResponse>> verify(@PathVariable("enquiryId") UUID enquiryId,
                                                                       @Valid @RequestBody VerifyTransferCertificateRequest request) {
         log.info("Request to verify transfer certificate {} ({}) for enquiry {}", request.getTcNumber(), request.getBoard(), enquiryId);
@@ -44,7 +45,7 @@ public class TransferCertificateVerificationController {
      * Board lookups made for an enquiry.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('FRONT_OFFICE_COUNSELOR', 'REGISTRAR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.DOCUMENT_FOLLOW_UPS_VIEW)
     public ResponseEntity<ApiResponse<List<TcVerificationResponse>>> history(@PathVariable("enquiryId") UUID enquiryId) {
         return ResponseEntity.ok(ApiResponse.success(verificationService.history(enquiryId)));
     }

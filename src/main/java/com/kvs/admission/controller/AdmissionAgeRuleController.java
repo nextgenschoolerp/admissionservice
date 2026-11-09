@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.AgeCheckResponse;
 import com.kvs.admission.dto.AgeRuleResponse;
 import com.kvs.admission.dto.SaveAgeRuleRequest;
@@ -25,19 +26,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdmissionAgeRuleController {
 
-    private static final String READERS = "hasAnyRole('FRONT_OFFICE_COUNSELOR', 'REGISTRAR', 'ADMISSION_OFFICER', 'TRUSTEE', 'PRINCIPAL', 'SCHOOL_PRINCIPAL', 'VICE_PRINCIPAL', 'SUPER_ADMIN')";
-    private static final String EDITORS = "hasAnyRole('REGISTRAR', 'ADMISSION_OFFICER', 'TRUSTEE', 'PRINCIPAL', 'SCHOOL_PRINCIPAL', 'VICE_PRINCIPAL', 'SUPER_ADMIN')";
 
     private final AdmissionAgeRuleService service;
 
     @GetMapping
-    @PreAuthorize(READERS)
+    @PreAuthorize(AdmissionPerms.AGE_RULES_VIEW)
     public ResponseEntity<ApiResponse<List<AgeRuleResponse>>> rules(@RequestParam("tenantId") String tenantId, @RequestParam("boardCode") String boardCode) {
         return ResponseEntity.ok(ApiResponse.success(service.effective(tenantId, boardCode)));
     }
 
     @GetMapping("/check")
-    @PreAuthorize(READERS)
+    @PreAuthorize(AdmissionPerms.AGE_RULES_VIEW)
     public ResponseEntity<ApiResponse<AgeCheckResponse>> check(@RequestParam("tenantId") String tenantId, @RequestParam("boardCode") String boardCode,
                                                                @RequestParam("className") String className,
                                                                @RequestParam("dateOfBirth") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateOfBirth,
@@ -46,14 +45,14 @@ public class AdmissionAgeRuleController {
     }
 
     @PutMapping("/{boardCode}/{className}")
-    @PreAuthorize(EDITORS)
+    @PreAuthorize(AdmissionPerms.AGE_RULES_MANAGE)
     public ResponseEntity<ApiResponse<AgeRuleResponse>> save(@PathVariable("boardCode") String boardCode, @PathVariable("className") String className,
                                                              @Valid @RequestBody SaveAgeRuleRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Age rule saved", service.save(boardCode, className, request)));
     }
 
     @DeleteMapping("/{boardCode}/{className}")
-    @PreAuthorize(EDITORS)
+    @PreAuthorize(AdmissionPerms.AGE_RULES_MANAGE)
     public ResponseEntity<ApiResponse<Void>> reset(@PathVariable("boardCode") String boardCode, @PathVariable("className") String className,
                                                    @RequestParam("tenantId") String tenantId) {
         service.reset(tenantId, boardCode, className);

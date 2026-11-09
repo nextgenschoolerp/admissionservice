@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.AdmitCardResponse;
 import com.kvs.admission.dto.EntranceExamResponse;
 import com.kvs.admission.dto.ScheduleEntranceExamRequest;
@@ -37,7 +38,7 @@ public class EntranceExamController {
      * @return 201 Created with the exam and its admit cards
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.WAITLISTS_MANAGE)
     public ResponseEntity<ApiResponse<EntranceExamResponse>> scheduleExam(
             @Valid @RequestBody ScheduleEntranceExamRequest request) {
         log.info("Request to schedule entrance exam '{}' for {} candidates",
@@ -54,7 +55,7 @@ public class EntranceExamController {
      * @return 200 OK with exam details
      */
     @GetMapping("/{examId}")
-    @PreAuthorize("hasAnyRole('ADMISSION_OFFICER', 'FRONT_OFFICE_COUNSELOR', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.ENTRANCE_EXAMS_VIEW)
     public ResponseEntity<ApiResponse<EntranceExamResponse>> getExam(@PathVariable("examId") UUID examId) {
         log.info("Request to fetch entrance exam: {}", examId);
         return ResponseEntity.ok(ApiResponse.success(entranceExamService.getExam(examId)));
@@ -67,7 +68,7 @@ public class EntranceExamController {
      * @return 200 OK with admit cards ordered by roll number
      */
     @GetMapping("/{examId}/admit-cards")
-    @PreAuthorize("hasAnyRole('ADMISSION_OFFICER', 'FRONT_OFFICE_COUNSELOR', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.ENTRANCE_EXAMS_VIEW)
     public ResponseEntity<ApiResponse<List<AdmitCardResponse>>> listAdmitCards(@PathVariable("examId") UUID examId) {
         log.info("Request to list admit cards for entrance exam: {}", examId);
         return ResponseEntity.ok(ApiResponse.success(entranceExamService.listAdmitCards(examId)));

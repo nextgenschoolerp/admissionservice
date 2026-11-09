@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.ConversionRateReportResponse;
 import com.kvs.admission.service.LeadConversionAnalyticsService;
 import com.kvs.core.dto.ApiResponse;
@@ -36,7 +37,7 @@ public class AdmissionAnalyticsController {
      * @return 200 OK with the conversion report
      */
     @GetMapping("/conversion-rates")
-    @PreAuthorize("hasAnyRole('MARKETING_MANAGER', 'REGISTRAR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.ANALYTICS_2_VIEW)
     public ResponseEntity<ApiResponse<ConversionRateReportResponse>> getConversionRates(
             @RequestParam("tenantId") String tenantId,
             @RequestParam(value = "branchId", required = false) String branchId,

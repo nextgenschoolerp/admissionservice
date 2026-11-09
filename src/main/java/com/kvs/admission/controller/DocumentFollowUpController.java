@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.DocumentFollowUpResponse;
 import com.kvs.admission.dto.DocumentFollowUpScanResponse;
 import com.kvs.admission.dto.ResolveFollowUpRequest;
@@ -35,7 +36,7 @@ public class DocumentFollowUpController {
      * Scan a branch and flag applicants with incomplete mandatory documents (US-02011).
      */
     @PostMapping("/scan")
-    @PreAuthorize("hasAnyRole('REGISTRAR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.DOCUMENT_FOLLOW_UPS_MANAGE)
     public ResponseEntity<ApiResponse<DocumentFollowUpScanResponse>> scan(@Valid @RequestBody ScanDocumentFollowUpsRequest request) {
         log.info("Request to scan document completeness for tenant {}, branch {}", request.getTenantId(), request.getBranchId());
         return ResponseEntity.ok(ApiResponse.success("Document completeness scan finished", followUpService.scan(request)));
@@ -45,7 +46,7 @@ public class DocumentFollowUpController {
      * List follow-ups of a branch, optionally by status.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('REGISTRAR', 'ADMISSION_OFFICER', 'FRONT_OFFICE_COUNSELOR', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.DOCUMENT_FOLLOW_UPS_VIEW)
     public ResponseEntity<ApiResponse<List<DocumentFollowUpResponse>>> list(
             @RequestParam("tenantId") String tenantId,
             @RequestParam("branchId") String branchId,
@@ -57,7 +58,7 @@ public class DocumentFollowUpController {
      * Resolve an open follow-up manually.
      */
     @PatchMapping("/{followUpId}/resolution")
-    @PreAuthorize("hasAnyRole('REGISTRAR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.DOCUMENT_FOLLOW_UPS_MANAGE)
     public ResponseEntity<ApiResponse<DocumentFollowUpResponse>> resolve(@PathVariable("followUpId") UUID followUpId,
                                                                          @Valid @RequestBody ResolveFollowUpRequest request) {
         log.info("Request to resolve document follow-up {}", followUpId);

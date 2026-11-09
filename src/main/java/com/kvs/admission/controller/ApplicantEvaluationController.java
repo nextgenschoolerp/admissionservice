@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.EvaluationResponse;
 import com.kvs.admission.dto.RecordEvaluationRequest;
 import com.kvs.admission.dto.RubricCriterionResponse;
@@ -38,7 +39,7 @@ public class ApplicantEvaluationController {
      * @return 200 OK with rubric criteria
      */
     @GetMapping("/evaluation-rubrics")
-    @PreAuthorize("hasAnyRole('REGISTRAR', 'ENTRANCE_EXAM_EVALUATOR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.EVALUATION_RUBRICS_VIEW)
     public ResponseEntity<ApiResponse<List<RubricCriterionResponse>>> getRubric(
             @RequestParam(value = "evaluationType", required = false) EvaluationType evaluationType) {
         return ResponseEntity.ok(ApiResponse.success(evaluationService.getRubric(evaluationType)));
@@ -51,7 +52,7 @@ public class ApplicantEvaluationController {
      * @return 201 Created with the evaluation result
      */
     @PostMapping("/evaluations")
-    @PreAuthorize("hasAnyRole('REGISTRAR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.DOCUMENT_FOLLOW_UPS_MANAGE)
     public ResponseEntity<ApiResponse<EvaluationResponse>> recordEvaluation(
             @Valid @RequestBody RecordEvaluationRequest request) {
         log.info("Request to record {} evaluation for enquiry: {}", request.getEvaluationType(), request.getEnquiryId());
@@ -67,7 +68,7 @@ public class ApplicantEvaluationController {
      * @return 200 OK with the evaluation
      */
     @GetMapping("/evaluations/{evaluationId}")
-    @PreAuthorize("hasAnyRole('REGISTRAR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.EVALUATIONS_VIEW)
     public ResponseEntity<ApiResponse<EvaluationResponse>> getEvaluation(
             @PathVariable("evaluationId") UUID evaluationId) {
         log.info("Request to fetch evaluation: {}", evaluationId);
@@ -81,7 +82,7 @@ public class ApplicantEvaluationController {
      * @return 200 OK with evaluations
      */
     @GetMapping("/enquiries/{enquiryId}/evaluations")
-    @PreAuthorize("hasAnyRole('REGISTRAR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.EVALUATIONS_VIEW)
     public ResponseEntity<ApiResponse<List<EvaluationResponse>>> listEvaluations(
             @PathVariable("enquiryId") UUID enquiryId) {
         log.info("Request to list evaluations for enquiry: {}", enquiryId);

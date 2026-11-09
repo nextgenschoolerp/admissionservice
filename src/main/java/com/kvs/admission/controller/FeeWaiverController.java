@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.FeeWaiverDecisionRequest;
 import com.kvs.admission.dto.FeeWaiverResponse;
 import com.kvs.admission.dto.RequestFeeWaiverRequest;
@@ -35,7 +36,7 @@ public class FeeWaiverController {
      * Request a scholarship waiver on an offer's seat reservation fee.
      */
     @PostMapping("/offers/{offerId}/fee-waivers")
-    @PreAuthorize("hasAnyRole('ADMISSION_OFFICER', 'REGISTRAR', 'SCHOOL_PRINCIPAL', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.OFFERS_3_MANAGE)
     public ResponseEntity<ApiResponse<FeeWaiverResponse>> request(@PathVariable("offerId") UUID offerId,
                                                                   @Valid @RequestBody RequestFeeWaiverRequest request) {
         log.info("Request for {} waiver of {}% on offer {}", request.getScholarshipCategory(), request.getWaiverPercent(), offerId);
@@ -47,7 +48,7 @@ public class FeeWaiverController {
      * Approve or reject a waiver (US-02016).
      */
     @PatchMapping("/fee-waivers/{waiverId}/decision")
-    @PreAuthorize("hasAnyRole('SCHOOL_PRINCIPAL', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.FEE_WAIVERS_MANAGE)
     public ResponseEntity<ApiResponse<FeeWaiverResponse>> decide(@PathVariable("waiverId") UUID waiverId,
                                                                  @Valid @RequestBody FeeWaiverDecisionRequest request) {
         log.info("Request to mark fee waiver {} as {}", waiverId, request.getDecision());
@@ -55,13 +56,13 @@ public class FeeWaiverController {
     }
 
     @GetMapping("/fee-waivers/{waiverId}")
-    @PreAuthorize("hasAnyRole('ADMISSION_OFFICER', 'REGISTRAR', 'SCHOOL_PRINCIPAL', 'FINANCE_CASHIER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.FEE_WAIVERS_VIEW)
     public ResponseEntity<ApiResponse<FeeWaiverResponse>> get(@PathVariable("waiverId") UUID waiverId) {
         return ResponseEntity.ok(ApiResponse.success(waiverService.getWaiver(waiverId)));
     }
 
     @GetMapping("/fee-waivers")
-    @PreAuthorize("hasAnyRole('ADMISSION_OFFICER', 'REGISTRAR', 'SCHOOL_PRINCIPAL', 'FINANCE_CASHIER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.FEE_WAIVERS_VIEW)
     public ResponseEntity<ApiResponse<List<FeeWaiverResponse>>> list(@RequestParam("tenantId") String tenantId,
                                                                      @RequestParam(value = "status", required = false) WaiverStatus status) {
         return ResponseEntity.ok(ApiResponse.success(waiverService.listWaivers(tenantId, status)));

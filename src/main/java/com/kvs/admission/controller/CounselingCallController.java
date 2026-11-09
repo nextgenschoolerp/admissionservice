@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.CallbackResponse;
 import com.kvs.admission.dto.CancelCallbackRequest;
 import com.kvs.admission.dto.CounselingCallResponse;
@@ -38,7 +39,7 @@ public class CounselingCallController {
      * Log a counseling call; a callback is scheduled automatically from the outcome (US-02015).
      */
     @PostMapping("/enquiries/{enquiryId}/calls")
-    @PreAuthorize("hasAnyRole('FRONT_OFFICE_COUNSELOR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.CALLBACKS_MANAGE)
     public ResponseEntity<ApiResponse<CounselingCallResponse>> logCall(@PathVariable("enquiryId") UUID enquiryId,
                                                                        @Valid @RequestBody LogCallRequest request) {
         log.info("Request to log {} call ({}) for enquiry {}", request.getDirection(), request.getOutcome(), enquiryId);
@@ -50,7 +51,7 @@ public class CounselingCallController {
      * Call history of an enquiry.
      */
     @GetMapping("/enquiries/{enquiryId}/calls")
-    @PreAuthorize("hasAnyRole('FRONT_OFFICE_COUNSELOR', 'ADMISSION_OFFICER', 'MARKETING_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.CALLBACKS_VIEW)
     public ResponseEntity<ApiResponse<List<CounselingCallResponse>>> listCalls(@PathVariable("enquiryId") UUID enquiryId) {
         return ResponseEntity.ok(ApiResponse.success(callService.listCalls(enquiryId)));
     }
@@ -59,7 +60,7 @@ public class CounselingCallController {
      * Scheduled callbacks that are due, optionally for one counselor.
      */
     @GetMapping("/callbacks")
-    @PreAuthorize("hasAnyRole('FRONT_OFFICE_COUNSELOR', 'ADMISSION_OFFICER', 'MARKETING_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.CALLBACKS_VIEW)
     public ResponseEntity<ApiResponse<List<CallbackResponse>>> dueCallbacks(
             @RequestParam("tenantId") String tenantId,
             @RequestParam(value = "assignedTo", required = false) String assignedTo,
@@ -71,7 +72,7 @@ public class CounselingCallController {
      * Cancel a scheduled callback.
      */
     @PatchMapping("/callbacks/{callbackId}/cancellation")
-    @PreAuthorize("hasAnyRole('FRONT_OFFICE_COUNSELOR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.CALLBACKS_MANAGE)
     public ResponseEntity<ApiResponse<CallbackResponse>> cancel(@PathVariable("callbackId") UUID callbackId,
                                                                 @Valid @RequestBody CancelCallbackRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Callback cancelled", callService.cancelCallback(callbackId, request)));

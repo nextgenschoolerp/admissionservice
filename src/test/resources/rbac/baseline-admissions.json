@@ -1,0 +1,600 @@
+{
+ "service": "admissions",
+ "capturedAt": "2026-11-08",
+ "source": "GET access-rules via dev app (SUPER_ADMIN session)",
+ "rules": [
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/acceptance-notifications",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/access-rules",
+   "roles": []
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/age-rules",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FRONT_OFFICE_COUNSELOR",
+    "PRINCIPAL",
+    "REGISTRAR",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN",
+    "TRUSTEE",
+    "VICE_PRINCIPAL"
+   ]
+  },
+  {
+   "method": "DELETE",
+   "path": "/api/v1/admissions/age-rules/{boardCode}/{className}",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "PRINCIPAL",
+    "REGISTRAR",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN",
+    "TRUSTEE",
+    "VICE_PRINCIPAL"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/api/v1/admissions/age-rules/{boardCode}/{className}",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "PRINCIPAL",
+    "REGISTRAR",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN",
+    "TRUSTEE",
+    "VICE_PRINCIPAL"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/age-rules/check",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FRONT_OFFICE_COUNSELOR",
+    "PRINCIPAL",
+    "REGISTRAR",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN",
+    "TRUSTEE",
+    "VICE_PRINCIPAL"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/analytics/archived-lead-trends",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "MARKETING_MANAGER",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/analytics/conversion-rates",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "MARKETING_MANAGER",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/analytics/cost-per-acquisition",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "MARKETING_MANAGER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/callbacks",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FRONT_OFFICE_COUNSELOR",
+    "MARKETING_MANAGER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "PATCH",
+   "path": "/api/v1/admissions/callbacks/{callbackId}/cancellation",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FRONT_OFFICE_COUNSELOR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/deposits/receipts/{receiptNumber}",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FINANCE_CASHIER",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/document-follow-ups",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FRONT_OFFICE_COUNSELOR",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "PATCH",
+   "path": "/api/v1/admissions/document-follow-ups/{followUpId}/resolution",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/document-follow-ups/scan",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "PATCH",
+   "path": "/api/v1/admissions/documents/{documentId}/verification",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/enquiries",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "ENTRANCE_EXAM_EVALUATOR",
+    "FINANCE_CASHIER",
+    "FRONT_OFFICE_COUNSELOR",
+    "REGISTRAR",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/enquiries",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "APPLICANT_PARENT",
+    "FRONT_OFFICE_COUNSELOR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/enquiries/{enquiryId}",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "APPLICANT_PARENT",
+    "ENTRANCE_EXAM_EVALUATOR",
+    "FINANCE_CASHIER",
+    "FRONT_OFFICE_COUNSELOR",
+    "REGISTRAR",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/enquiries/{enquiryId}/calls",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FRONT_OFFICE_COUNSELOR",
+    "MARKETING_MANAGER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/enquiries/{enquiryId}/calls",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FRONT_OFFICE_COUNSELOR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "PATCH",
+   "path": "/api/v1/admissions/enquiries/{enquiryId}/decision",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/enquiries/{enquiryId}/documents",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "ENTRANCE_EXAM_EVALUATOR",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/enquiries/{enquiryId}/documents",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "ENTRANCE_EXAM_EVALUATOR",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/enquiries/{enquiryId}/documents/{documentId}/file",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "ENTRANCE_EXAM_EVALUATOR",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/enquiries/{enquiryId}/evaluations",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/enquiries/{enquiryId}/offers",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FINANCE_CASHIER",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/enquiries/{enquiryId}/student-conversion",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "APPLICANT_PARENT",
+    "FRONT_OFFICE_COUNSELOR",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/enquiries/{enquiryId}/transfer-certificate/verifications",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FRONT_OFFICE_COUNSELOR",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/enquiries/{enquiryId}/transfer-certificate/verifications",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FRONT_OFFICE_COUNSELOR",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/entrance-exams",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/entrance-exams/{examId}",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FRONT_OFFICE_COUNSELOR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/entrance-exams/{examId}/admit-cards",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FRONT_OFFICE_COUNSELOR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/evaluation-rubrics",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "ENTRANCE_EXAM_EVALUATOR",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/evaluations",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/evaluations/{evaluationId}",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/fee-waivers",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FINANCE_CASHIER",
+    "REGISTRAR",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/fee-waivers/{waiverId}",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FINANCE_CASHIER",
+    "REGISTRAR",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "PATCH",
+   "path": "/api/v1/admissions/fee-waivers/{waiverId}/decision",
+   "roles": [
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/grade-sections",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FRONT_OFFICE_COUNSELOR",
+    "REGISTRAR",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/api/v1/admissions/grade-sections",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/grade-sections/auto-placement",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/lead-archives",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/marketing-campaigns",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FRONT_OFFICE_COUNSELOR",
+    "MARKETING_MANAGER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/marketing-campaigns",
+   "roles": [
+    "MARKETING_MANAGER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "PATCH",
+   "path": "/api/v1/admissions/marketing-campaigns/{campaignId}",
+   "roles": [
+    "MARKETING_MANAGER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/merit-lists",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/merit-lists/{meritListId}",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "REGISTRAR",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/merit-lists/{meritListId}/pdf",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "ENTRANCE_EXAM_EVALUATOR",
+    "REGISTRAR",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/offers",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FINANCE_CASHIER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/offers/{offerId}",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FINANCE_CASHIER",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/offers/{offerId}/deposits",
+   "roles": [
+    "FINANCE_CASHIER",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/offers/{offerId}/fee-waivers",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "REGISTRAR",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/reminders/entrance-evaluations",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FRONT_OFFICE_COUNSELOR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/students/{studentId}",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "APPLICANT_PARENT",
+    "FRONT_OFFICE_COUNSELOR",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/api/v1/admissions/students/{studentId}/placement",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/waitlists",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "REGISTRAR",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/waitlists/entries",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "DELETE",
+   "path": "/api/v1/admissions/waitlists/entries/{entryId}",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/v1/admissions/waitlists/escalation",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/api/v1/admissions/waitlists/rules",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "SUPER_ADMIN"
+   ]
+  }
+ ]
+}

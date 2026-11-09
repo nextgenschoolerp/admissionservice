@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.DispatchRemindersRequest;
 import com.kvs.admission.dto.ReminderDispatchSummaryResponse;
 import com.kvs.admission.service.ApplicantReminderService;
@@ -35,7 +36,7 @@ public class ApplicantReminderController {
      * @return 200 OK with the dispatch summary
      */
     @PostMapping("/entrance-evaluations")
-    @PreAuthorize("hasAnyRole('FRONT_OFFICE_COUNSELOR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.CALLBACKS_MANAGE)
     public ResponseEntity<ApiResponse<ReminderDispatchSummaryResponse>> dispatchReminders(
             @Valid @RequestBody DispatchRemindersRequest request) {
         log.info("Request to dispatch entrance evaluation reminders for tenant {}, branch {}",

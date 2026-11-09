@@ -1,5 +1,6 @@
 package com.kvs.admission.service;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.core.exception.ForbiddenException;
 import com.kvs.core.util.SecurityUtils;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,7 +16,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Record-level access rules shared by the admission services.
@@ -26,19 +26,21 @@ import java.util.Set;
 @Component
 public class AdmissionAccessGuard {
 
-    static final Set<String> STAFF_ROLES = Set.of(
-            "ROLE_SUPER_ADMIN", "ROLE_ADMISSION_OFFICER", "ROLE_REGISTRAR", "ROLE_FRONT_OFFICE_COUNSELOR",
-            "ROLE_ENTRANCE_EXAM_EVALUATOR", "ROLE_FINANCE_CASHIER", "ROLE_MARKETING_MANAGER", "ROLE_SCHOOL_PRINCIPAL");
-
     @Autowired
     private ObjectMapper objectMapper;
 
-    /** True when the caller holds at least one admission staff role. */
+    /**
+     * True when the caller may act on any applicant's record (permission admissions.leads.any-record; by default
+     * the admission staff roles and SUPER_ADMIN). Everyone else acts only on records under their own guardian email.
+     */
     public boolean isStaff() {
-        return SecurityUtils.getCurrentUserRoles().stream().anyMatch(STAFF_ROLES::contains);
+        return SecurityUtils.can(AdmissionPerms.LEADS_ANY_RECORD);
     }
 
-    /** True when the caller is a front-office counselor. */
+    /**
+     * True when the caller is a front-office counselor. Still a role check: it decides whose leads a counselor is
+     * assigned, a data scope that moves to permissions with scopes in RBAC migration Phase 6.
+     */
     public boolean isCounselor() {
         return SecurityUtils.getCurrentUserRoles().contains("ROLE_FRONT_OFFICE_COUNSELOR");
     }

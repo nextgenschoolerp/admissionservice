@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.CampaignResponse;
 import com.kvs.admission.dto.CostPerAcquisitionReportResponse;
 import com.kvs.admission.dto.CreateCampaignRequest;
@@ -33,7 +34,7 @@ public class MarketingCampaignController {
     private MarketingCampaignService campaignService;
 
     @PostMapping("/marketing-campaigns")
-    @PreAuthorize("hasAnyRole('MARKETING_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.MARKETING_CAMPAIGNS_MANAGE)
     public ResponseEntity<ApiResponse<CampaignResponse>> create(@Valid @RequestBody CreateCampaignRequest request) {
         log.info("Request to create campaign {}", request.getCampaignCode());
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -41,14 +42,14 @@ public class MarketingCampaignController {
     }
 
     @PatchMapping("/marketing-campaigns/{campaignId}")
-    @PreAuthorize("hasAnyRole('MARKETING_MANAGER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.MARKETING_CAMPAIGNS_MANAGE)
     public ResponseEntity<ApiResponse<CampaignResponse>> update(@PathVariable("campaignId") UUID campaignId,
                                                                 @Valid @RequestBody UpdateCampaignRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Marketing campaign updated", campaignService.updateCampaign(campaignId, request)));
     }
 
     @GetMapping("/marketing-campaigns")
-    @PreAuthorize("hasAnyRole('MARKETING_MANAGER', 'ADMISSION_OFFICER', 'FRONT_OFFICE_COUNSELOR', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.CALLBACKS_VIEW)
     public ResponseEntity<ApiResponse<List<CampaignResponse>>> list(@RequestParam("tenantId") String tenantId,
                                                                     @RequestParam(value = "status", required = false) CampaignStatus status) {
         return ResponseEntity.ok(ApiResponse.success(campaignService.listCampaigns(tenantId, status)));
@@ -58,7 +59,7 @@ public class MarketingCampaignController {
      * Cost per lead and per acquisition across campaigns (US-02019).
      */
     @GetMapping("/analytics/cost-per-acquisition")
-    @PreAuthorize("hasAnyRole('MARKETING_MANAGER', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.ANALYTICS_3_VIEW)
     public ResponseEntity<ApiResponse<CostPerAcquisitionReportResponse>> costPerAcquisition(
             @RequestParam("tenantId") String tenantId,
             @RequestParam(value = "status", required = false) CampaignStatus status) {

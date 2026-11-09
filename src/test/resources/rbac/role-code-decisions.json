@@ -1,0 +1,29 @@
+{
+  "decidedAt": "2026-11-08",
+  "note": "Role codes named in @PreAuthorize but not present in the roles table (see database/rbac/baseline). Accepted as proposed in the RBAC migration (school_webapp/docs/rbac-migration-log.md).",
+  "drop": {
+    "ADMIN": "Covered by SUPER_ADMIN (implicit all permissions).",
+    "STAFF": "Replaced by permission grants on real roles.",
+    "FACULTY_MEMBER": "Replaced by permission grants on real roles.",
+    "ADMINISTRATIVE_STAFF": "Replaced by permission grants on real roles.",
+    "PARENT": "Every rule naming it also names APPLICANT_PARENT.",
+    "ATTENDANCE_OFFICER": "No holder; a school can create it as a custom role if needed.",
+    "DATA_ANALYST": "No holder; a school can create it as a custom role if needed.",
+    "DATABASE_ADMINISTRATOR": "No holder; a school can create it as a custom role if needed.",
+    "CHIEF_TECHNOLOGY_OFFICER": "No holder; a school can create it as a custom role if needed."
+  },
+  "map": {
+    "ACADEMIC_HEAD": ["ACADEMIC_COORDINATOR"],
+    "SCHOOL_REGISTRAR": ["REGISTRAR"],
+    "ACCOUNTANT": ["CHIEF_ACCOUNTANT", "ACCOUNTS_CLERK"],
+    "IT_ADMIN": ["IT_SYSTEM_ADMIN"]
+  },
+  "create": {
+    "COMMUNICATION_OFFICER": "Communication officer: sends circulars and broadcasts; referenced by student, hr, communication and auth."
+  },
+  "serviceAccounts": {
+    "SYSTEM_AUTOMATION": "Scheduled jobs and internal automation.",
+    "SYSTEM_INTEGRATOR": "External integrations calling the APIs.",
+    "SCOPE_WRITE_ATTENDANCE": "Device/attendance-machine scope used by hrservice."
+  }
+}

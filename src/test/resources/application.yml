@@ -17,6 +17,14 @@ spring:
 server:
   port: -1
 
+kvs:
+  # Tests have no authservice: permissions come from the catalogue's defaults (ms-core rbac/permissions.json)
+  rbac:
+    resolver: static
+  access-rules:
+    path: /api/v1/admissions/access-rules
+    base-package: com.kvs.admission
+
 logging:
   level:
     root: warn

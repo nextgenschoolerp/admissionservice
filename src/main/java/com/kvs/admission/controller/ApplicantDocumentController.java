@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.ApplicantDocumentResponse;
 import com.kvs.admission.dto.VerifyDocumentRequest;
 import com.kvs.admission.enums.DocumentType;
@@ -43,7 +44,7 @@ public class ApplicantDocumentController {
      * @return 201 Created with stored document metadata
      */
     @PostMapping(value = "/enquiries/{enquiryId}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('ENTRANCE_EXAM_EVALUATOR', 'SCHOOL_PRINCIPAL', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.ENQUIRIES_2_MANAGE)
     public ResponseEntity<ApiResponse<ApplicantDocumentResponse>> uploadDocument(
             @PathVariable("enquiryId") UUID enquiryId,
             @RequestParam("documentType") DocumentType documentType,
@@ -61,7 +62,7 @@ public class ApplicantDocumentController {
      * @return 200 OK with documents
      */
     @GetMapping("/enquiries/{enquiryId}/documents")
-    @PreAuthorize("hasAnyRole('ENTRANCE_EXAM_EVALUATOR', 'REGISTRAR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.EVALUATION_RUBRICS_VIEW)
     public ResponseEntity<ApiResponse<List<ApplicantDocumentResponse>>> listDocuments(
             @PathVariable("enquiryId") UUID enquiryId) {
         log.info("Request to list vault documents for enquiry: {}", enquiryId);
@@ -76,7 +77,7 @@ public class ApplicantDocumentController {
      * @return 200 OK with the file bytes
      */
     @GetMapping("/enquiries/{enquiryId}/documents/{documentId}/file")
-    @PreAuthorize("hasAnyRole('ENTRANCE_EXAM_EVALUATOR', 'REGISTRAR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.EVALUATION_RUBRICS_VIEW)
     public ResponseEntity<byte[]> downloadDocument(
             @PathVariable("enquiryId") UUID enquiryId,
             @PathVariable("documentId") UUID documentId) {
@@ -96,7 +97,7 @@ public class ApplicantDocumentController {
      * @return 200 OK with the updated document
      */
     @PatchMapping("/documents/{documentId}/verification")
-    @PreAuthorize("hasAnyRole('REGISTRAR', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.DOCUMENT_FOLLOW_UPS_MANAGE)
     public ResponseEntity<ApiResponse<ApplicantDocumentResponse>> verifyDocument(
             @PathVariable("documentId") UUID documentId,
             @Valid @RequestBody VerifyDocumentRequest request) {

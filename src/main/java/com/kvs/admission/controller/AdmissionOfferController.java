@@ -1,5 +1,6 @@
 package com.kvs.admission.controller;
 
+import com.kvs.admission.config.AdmissionPerms;
 import com.kvs.admission.dto.AdmissionOfferResponse;
 import com.kvs.admission.dto.IssueOfferRequest;
 import com.kvs.admission.service.AdmissionOfferService;
@@ -36,7 +37,7 @@ public class AdmissionOfferController {
      * @return 201 Created with the dispatched offer
      */
     @PostMapping("/offers")
-    @PreAuthorize("hasAnyRole('FINANCE_CASHIER', 'ADMISSION_OFFICER', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.OFFERS_MANAGE)
     public ResponseEntity<ApiResponse<AdmissionOfferResponse>> issueOffer(@Valid @RequestBody IssueOfferRequest request) {
         log.info("Request to issue admission offer for enquiry: {}", request.getEnquiryId());
         AdmissionOfferResponse response = offerService.issueOffer(request);
@@ -51,7 +52,7 @@ public class AdmissionOfferController {
      * @return 200 OK with the offer
      */
     @GetMapping("/offers/{offerId}")
-    @PreAuthorize("hasAnyRole('FINANCE_CASHIER', 'ADMISSION_OFFICER', 'SCHOOL_PRINCIPAL', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.DEPOSITS_VIEW)
     public ResponseEntity<ApiResponse<AdmissionOfferResponse>> getOffer(@PathVariable("offerId") UUID offerId) {
         log.info("Request to fetch admission offer: {}", offerId);
         return ResponseEntity.ok(ApiResponse.success(offerService.getOffer(offerId)));
@@ -64,7 +65,7 @@ public class AdmissionOfferController {
      * @return 200 OK with offers, newest first
      */
     @GetMapping("/enquiries/{enquiryId}/offers")
-    @PreAuthorize("hasAnyRole('FINANCE_CASHIER', 'ADMISSION_OFFICER', 'SCHOOL_PRINCIPAL', 'SUPER_ADMIN')")
+    @PreAuthorize(AdmissionPerms.DEPOSITS_VIEW)
     public ResponseEntity<ApiResponse<List<AdmissionOfferResponse>>> listOffers(
             @PathVariable("enquiryId") UUID enquiryId) {
         log.info("Request to list offers for enquiry: {}", enquiryId);
