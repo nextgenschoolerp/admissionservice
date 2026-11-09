@@ -43,8 +43,8 @@ jobs:
 
       - name: Build Application and Run Tests
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GPR_TOKEN || secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ secrets.GPR_ACTOR || github.actor }}
           GPR_REPO_URL: https://maven.pkg.github.com/nextgenschoolerp/coreservice
         run: ./gradlew clean assemble test --no-daemon
 
