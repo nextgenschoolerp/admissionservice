@@ -179,6 +179,19 @@
    ]
   },
   {
+   "method": "GET",
+   "path": "/api/v1/admissions/enquiries/summary",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "ENTRANCE_EXAM_EVALUATOR",
+    "FINANCE_CASHIER",
+    "FRONT_OFFICE_COUNSELOR",
+    "REGISTRAR",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
    "method": "POST",
    "path": "/api/v1/admissions/enquiries",
    "roles": [

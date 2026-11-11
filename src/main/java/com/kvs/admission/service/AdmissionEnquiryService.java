@@ -199,6 +199,15 @@ public class AdmissionEnquiryService {
                 .collect(Collectors.toList());
     }
 
+    /** Statuses of an application still in progress: not enrolled, not offered or withdrawn. */
+    private static final List<String> OPEN_STATUSES = List.of("NEW_INQUIRY", "CONTACTED", "EVALUATION_SCHEDULED", "EVALUATION_PASSED", "OFFER_ISSUED");
+
+    /** How many applications of a campus are still open (not archived), for dashboards: { open }. */
+    public java.util.Map<String, Long> enquirySummary(String tenantId, String branchId) {
+        return java.util.Map.of("open",
+                admissionEnquiryRepository.countByTenantIdAndBranchIdAndEnquiryStatusInAndArchivedAtIsNull(tenantId, branchId, OPEN_STATUSES));
+    }
+
     private String generateApplicationNumber() {
         int year = LocalDate.now().getYear();
         String uniquePart = UUID.randomUUID().toString().substring(0, 8).toUpperCase();

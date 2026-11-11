@@ -314,6 +314,20 @@ class AdmissionEnquiryControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.candidateFirstName").value("Rohan"));
     }
 
+    @Test
+    @DisplayName("GET /api/v1/admissions/enquiries/summary - open application count for the roles that read the list")
+    void testEnquirySummary() throws Exception {
+        when(admissionEnquiryService.enquirySummary("tenant-001", "branch-001")).thenReturn(Map.of("open", 7L));
+
+        mockMvc.perform(get("/api/v1/admissions/enquiries/summary").param("tenantId", "tenant-001").param("branchId", "branch-001")
+                        .header("Authorization", "Bearer " + counselorToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.open").value(7));
+        mockMvc.perform(get("/api/v1/admissions/enquiries/summary").param("tenantId", "tenant-001").param("branchId", "branch-001")
+                        .header("Authorization", "Bearer " + teacherToken))
+                .andExpect(status().isForbidden());
+    }
+
     // --- Trace Header Propagation ---
 
     @Test
