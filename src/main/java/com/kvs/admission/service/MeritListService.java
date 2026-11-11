@@ -51,6 +51,9 @@ public class MeritListService {
     @Autowired
     private AdmissionAuditService auditService;
 
+    @Autowired
+    private ConfigurableIdGenerator idGenerator;
+
     /**
      * Ranks every evaluated candidate of a grade/academic year by weighted score and stores the merit list.
      * A candidate is ranked only when it has an evaluation for each component whose weight is above zero;
@@ -112,7 +115,7 @@ public class MeritListService {
                 MeritRankingCalculator.rank(candidates, entranceWeight, interviewWeight);
 
         MeritList meritList = new MeritList();
-        meritList.setMeritListCode(ReferenceNumberGenerator.next("MERIT"));
+        meritList.setMeritListCode(idGenerator.next(request.getTenantId(), "MERIT"));
         meritList.setTenantId(request.getTenantId());
         meritList.setBranchId(request.getBranchId());
         meritList.setAcademicYearId(request.getAcademicYearId());

@@ -54,6 +54,9 @@ public class EntranceExamService {
     @Autowired
     private AdmissionAuditService auditService;
 
+    @Autowired
+    private ConfigurableIdGenerator idGenerator;
+
     /**
      * Schedules an entrance exam and generates one admit card per candidate.
      * Every candidate must belong to the same tenant, branch, academic year and grade as the exam,
@@ -98,7 +101,7 @@ public class EntranceExamService {
         EntranceExamSchedule exam = new EntranceExamSchedule();
         exam.setTenantId(request.getTenantId());
         exam.setBranchId(request.getBranchId());
-        exam.setExamCode(ReferenceNumberGenerator.next("EXAM"));
+        exam.setExamCode(idGenerator.next(request.getTenantId(), "EXAM"));
         exam.setExamTitle(request.getExamTitle());
         exam.setAcademicYearId(request.getAcademicYearId());
         exam.setTargetGradeId(request.getTargetGradeId());
@@ -120,7 +123,7 @@ public class EntranceExamService {
             card.setTenantId(request.getTenantId());
             card.setExamId(savedExam.getExamId());
             card.setEnquiryId(enquiryId);
-            card.setAdmitCardNumber(ReferenceNumberGenerator.next("ADMIT"));
+            card.setAdmitCardNumber(idGenerator.next(request.getTenantId(), "ADMIT"));
             card.setRollNumber(String.format("%s-%03d", savedExam.getExamCode(), sequence));
             card.setSeatNumber(String.format("S-%03d", sequence));
             card.setCandidateName(enquiry.getCandidateFirstName() + " " + enquiry.getCandidateLastName());

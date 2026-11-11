@@ -56,6 +56,9 @@ public class AdmissionOfferService {
     @Autowired
     private AdmissionAuditService auditService;
 
+    @Autowired
+    private ConfigurableIdGenerator idGenerator;
+
     @Value("${admission.payment.link-base-url:https://pay.kvs.local/admissions/offers}")
     private String paymentLinkBaseUrl;
 
@@ -88,7 +91,7 @@ public class AdmissionOfferService {
             }
         }
 
-        String offerCode = ReferenceNumberGenerator.next("OFFER");
+        String offerCode = idGenerator.next(enquiry.getTenantId(), "OFFER");
         String token = newPaymentToken();
         String gradeId = StringUtils.hasText(request.getOfferedGradeId())
                 ? request.getOfferedGradeId()

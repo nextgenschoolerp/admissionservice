@@ -56,6 +56,9 @@ public class FeeWaiverService {
     @Autowired
     private AdmissionAuditService auditService;
 
+    @Autowired
+    private ConfigurableIdGenerator idGenerator;
+
     /**
      * Requests a waiver on a dispatched, still-valid offer. Each category caps the percentage, and MERIT
      * requires an entrance test score of at least 85. Only one open or approved waiver per offer.
@@ -136,7 +139,7 @@ public class FeeWaiverService {
             deposit.setTenantId(offer.getTenantId());
             deposit.setOfferId(offer.getOfferId());
             deposit.setEnquiryId(offer.getEnquiryId());
-            deposit.setReceiptNumber(ReferenceNumberGenerator.next("RCPT"));
+            deposit.setReceiptNumber(idGenerator.next(offer.getTenantId(), "RCPT"));
             deposit.setAmountPaid(BigDecimal.ZERO.setScale(2));
             deposit.setCurrency(offer.getCurrency());
             deposit.setPaymentMode(PaymentMode.WAIVER);

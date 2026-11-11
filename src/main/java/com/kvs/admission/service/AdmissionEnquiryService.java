@@ -52,6 +52,9 @@ public class AdmissionEnquiryService {
     @Autowired
     private AdmissionAccessGuard accessGuard;
 
+    @Autowired
+    private ConfigurableIdGenerator idGenerator;
+
     /**
      * Captures a walk-in inquiry lead and persists it into the CRM database.
      * Generates a unique application number, validates for duplicate phone/email,
@@ -98,7 +101,7 @@ public class AdmissionEnquiryService {
                 });
 
         // Generate unique application number
-        String applicationNumber = generateApplicationNumber();
+        String applicationNumber = idGenerator.generateApplicationNumber(request.getTenantId());
 
         AdmissionEnquiry enquiry = new AdmissionEnquiry();
         enquiry.setTenantId(request.getTenantId());
