@@ -13,6 +13,9 @@ public interface EntranceExamScheduleRepository extends JpaRepository<EntranceEx
 
     Optional<EntranceExamSchedule> findByExamId(UUID examId);
 
+    /** Every exam of a campus, newest exam date first (admissions workspace → Entrance exams). */
+    List<EntranceExamSchedule> findByTenantIdAndBranchIdOrderByExamStartAtDesc(String tenantId, String branchId);
+
     List<EntranceExamSchedule> findByTenantIdAndBranchIdAndStatusAndExamStartAtBetweenOrderByExamStartAtAsc(
             String tenantId, String branchId, ExamScheduleStatus status, Instant from, Instant to);
 

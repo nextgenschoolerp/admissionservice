@@ -168,6 +168,21 @@ public class MeritListService {
     }
 
     /**
+     * Lists the merit lists of a campus, newest first.
+     *
+     * @param tenantId the school
+     * @param branchId the campus
+     * @return the merit lists with their entries
+     */
+    @Transactional(readOnly = true)
+    public List<MeritListResponse> listMeritLists(String tenantId, String branchId) {
+        log.info("Listing merit lists for tenant: {}, branch: {}", tenantId, branchId);
+        return meritListRepository.findByTenantIdAndBranchIdOrderByCreatedAtDesc(tenantId, branchId).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    /**
      * Renders a merit list as a noticeboard PDF and records the export in the audit trail.
      * US-02012, US-02032, US-02052, US-02072, US-02092: Export merit list rankings to PDF for public noticeboard display
      *

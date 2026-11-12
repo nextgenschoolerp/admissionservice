@@ -148,6 +148,28 @@ class EntranceExamControllerIntegrationTest extends AdmissionControllerTestSuppo
     }
 
     @Test
+    @DisplayName("GET entrance-exams - Counselor lists the campus's exams with admit cards (200)")
+    void listExams_Success() throws Exception {
+        when(entranceExamService.listExams("tenant-001", "branch-001")).thenReturn(List.of(examResponse()));
+
+        mockMvc.perform(get(URL).param("tenantId", "tenant-001").param("branchId", "branch-001")
+                        .header("Authorization", bearer("FRONT_OFFICE_COUNSELOR")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].examCode").value("EXAM-2026-1A2B3C4D"))
+                .andExpect(jsonPath("$.data[0].admitCards[0].seatNumber").value("S-001"));
+    }
+
+    @Test
+    @DisplayName("GET entrance-exams - Missing branch returns 400, a registrar is forbidden (403)")
+    void listExams_Negative() throws Exception {
+        mockMvc.perform(get(URL).param("tenantId", "tenant-001").header("Authorization", bearer("ADMISSION_OFFICER")))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get(URL).param("tenantId", "tenant-001").param("branchId", "branch-001")
+                        .header("Authorization", bearer("REGISTRAR")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @DisplayName("GET entrance-exams/{examId}/admit-cards - Counselor lists admit cards with trace headers")
     void listAdmitCards_Success() throws Exception {
         when(entranceExamService.listAdmitCards(EXAM_ID)).thenReturn(examResponse().getAdmitCards());

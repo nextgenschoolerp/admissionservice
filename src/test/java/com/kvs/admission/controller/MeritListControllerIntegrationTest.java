@@ -103,6 +103,28 @@ class MeritListControllerIntegrationTest extends AdmissionControllerTestSupport 
     }
 
     @Test
+    @DisplayName("GET merit-lists - Registrar lists the campus's merit lists (200)")
+    void listMeritLists_Success() throws Exception {
+        when(meritListService.listMeritLists("tenant-001", "branch-001")).thenReturn(List.of(
+                MeritListResponse.builder().meritListCode("MERIT-2026-ABCD1234").rankedCandidates(2).build()));
+
+        mockMvc.perform(get(URL).param("tenantId", "tenant-001").param("branchId", "branch-001")
+                        .header("Authorization", bearer("REGISTRAR")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].meritListCode").value("MERIT-2026-ABCD1234"));
+    }
+
+    @Test
+    @DisplayName("GET merit-lists - Missing branch returns 400, a counselor is forbidden (403)")
+    void listMeritLists_Negative() throws Exception {
+        mockMvc.perform(get(URL).param("tenantId", "tenant-001").header("Authorization", bearer("REGISTRAR")))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get(URL).param("tenantId", "tenant-001").param("branchId", "branch-001")
+                        .header("Authorization", bearer("FRONT_OFFICE_COUNSELOR")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @DisplayName("GET merit-lists/{id} - Unknown merit list returns 404")
     void getMeritList_NotFound() throws Exception {
         UUID unknown = UUID.randomUUID();

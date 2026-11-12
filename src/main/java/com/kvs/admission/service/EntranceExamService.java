@@ -176,6 +176,24 @@ public class EntranceExamService {
         return cards.stream().map(card -> mapAdmitCard(card, exam, enquiries.get(card.getEnquiryId()))).toList();
     }
 
+    /**
+     * Lists the entrance exams of a campus, latest first, each with its admit cards (for the admissions workspace).
+     *
+     * @param tenantId the school
+     * @param branchId the campus
+     * @return the exams, newest exam date first
+     */
+    @Transactional(readOnly = true)
+    public List<EntranceExamResponse> listExams(String tenantId, String branchId) {
+        log.info("Listing entrance exams for tenant: {}, branch: {}", tenantId, branchId);
+        return examScheduleRepository.findByTenantIdAndBranchIdOrderByExamStartAtDesc(tenantId, branchId).stream()
+                .map(exam -> {
+                    List<AdmitCard> cards = admitCardRepository.findByExamIdOrderByRollNumberAsc(exam.getExamId());
+                    return mapToResponse(exam, cards, loadEnquiries(cards));
+                })
+                .toList();
+    }
+
     private void validateCandidate(AdmissionEnquiry enquiry, ScheduleEntranceExamRequest request) {
         String applicationNumber = enquiry.getApplicationNumber();
         if (!enquiry.getTenantId().equals(request.getTenantId())

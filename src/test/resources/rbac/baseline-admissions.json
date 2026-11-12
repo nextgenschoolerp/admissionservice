@@ -31,6 +31,20 @@
    ]
   },
   {
+   "method": "GET",
+   "path": "/api/v1/admissions/age-rules/check",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FRONT_OFFICE_COUNSELOR",
+    "PRINCIPAL",
+    "REGISTRAR",
+    "SCHOOL_PRINCIPAL",
+    "SUPER_ADMIN",
+    "TRUSTEE",
+    "VICE_PRINCIPAL"
+   ]
+  },
+  {
    "method": "DELETE",
    "path": "/api/v1/admissions/age-rules/{boardCode}/{className}",
    "roles": [
@@ -48,20 +62,6 @@
    "path": "/api/v1/admissions/age-rules/{boardCode}/{className}",
    "roles": [
     "ADMISSION_OFFICER",
-    "PRINCIPAL",
-    "REGISTRAR",
-    "SCHOOL_PRINCIPAL",
-    "SUPER_ADMIN",
-    "TRUSTEE",
-    "VICE_PRINCIPAL"
-   ]
-  },
-  {
-   "method": "GET",
-   "path": "/api/v1/admissions/age-rules/check",
-   "roles": [
-    "ADMISSION_OFFICER",
-    "FRONT_OFFICE_COUNSELOR",
     "PRINCIPAL",
     "REGISTRAR",
     "SCHOOL_PRINCIPAL",
@@ -139,8 +139,8 @@
    ]
   },
   {
-   "method": "PATCH",
-   "path": "/api/v1/admissions/document-follow-ups/{followUpId}/resolution",
+   "method": "POST",
+   "path": "/api/v1/admissions/document-follow-ups/scan",
    "roles": [
     "ADMISSION_OFFICER",
     "REGISTRAR",
@@ -148,8 +148,8 @@
    ]
   },
   {
-   "method": "POST",
-   "path": "/api/v1/admissions/document-follow-ups/scan",
+   "method": "PATCH",
+   "path": "/api/v1/admissions/document-follow-ups/{followUpId}/resolution",
    "roles": [
     "ADMISSION_OFFICER",
     "REGISTRAR",
@@ -179,6 +179,16 @@
    ]
   },
   {
+   "method": "POST",
+   "path": "/api/v1/admissions/enquiries",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "APPLICANT_PARENT",
+    "FRONT_OFFICE_COUNSELOR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
    "method": "GET",
    "path": "/api/v1/admissions/enquiries/summary",
    "roles": [
@@ -188,16 +198,6 @@
     "FRONT_OFFICE_COUNSELOR",
     "REGISTRAR",
     "SCHOOL_PRINCIPAL",
-    "SUPER_ADMIN"
-   ]
-  },
-  {
-   "method": "POST",
-   "path": "/api/v1/admissions/enquiries",
-   "roles": [
-    "ADMISSION_OFFICER",
-    "APPLICANT_PARENT",
-    "FRONT_OFFICE_COUNSELOR",
     "SUPER_ADMIN"
    ]
   },
@@ -320,6 +320,15 @@
     "ADMISSION_OFFICER",
     "FRONT_OFFICE_COUNSELOR",
     "REGISTRAR",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/entrance-exams",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "FRONT_OFFICE_COUNSELOR",
     "SUPER_ADMIN"
    ]
   },
@@ -468,6 +477,16 @@
    "path": "/api/v1/admissions/marketing-campaigns/{campaignId}",
    "roles": [
     "MARKETING_MANAGER",
+    "SUPER_ADMIN"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/v1/admissions/merit-lists",
+   "roles": [
+    "ADMISSION_OFFICER",
+    "REGISTRAR",
+    "SCHOOL_PRINCIPAL",
     "SUPER_ADMIN"
    ]
   },
