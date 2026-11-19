@@ -2,6 +2,7 @@ package com.kvs.admission.service;
 
 import com.kvs.admission.entity.TenantIdFormatConfig;
 import com.kvs.admission.repo.TenantIdFormatConfigRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,12 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,8 +32,19 @@ class ConfigurableIdGeneratorTest {
     @Mock
     private TenantIdFormatConfigRepository configRepository;
 
+    @Mock
+    private IdCounterService counters;
+
     @InjectMocks
     private ConfigurableIdGenerator generator;
+
+    /** What the stored counter hands out next in these tests: the nextValue of the last config built. */
+    private static long counterValue;
+
+    @BeforeEach
+    void counterHandsOutConfiguredValue() {
+        lenient().when(counters.next(anyString(), anyString(), anyInt(), any())).thenAnswer(inv -> counterValue);
+    }
 
     private static TenantIdFormatConfig config(String prefix, String separator, boolean includeYear,
                                                String counterMode, int counterLength, long nextValue) {
@@ -38,6 +56,7 @@ class ConfigurableIdGeneratorTest {
             set(c, "counterMode", counterMode);
             set(c, "counterLength", counterLength);
             set(c, "nextValue", nextValue);
+            counterValue = nextValue;
             return c;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -171,6 +190,50 @@ class ConfigurableIdGeneratorTest {
             String id = generator.generateApplicationNumber(TENANT);
 
             assertThat(id).isEqualTo("APP/" + LocalDate.now().getYear() + "/" + String.format("%04d", 55));
+        }
+    }
+
+    @Nested
+    @DisplayName("Stored counter")
+    class StoredCounter {
+
+        @Test
+        @DisplayName("takes the counter of the school, format and year; a format without year never restarts")
+        void counterKey() {
+            when(configRepository.findByTenantIdAndFormatKey(TENANT, "admission_number"))
+                    .thenReturn(Optional.of(config("ADM", "-", true, "SEQUENTIAL", 5, 3)));
+            generator.next(TENANT, "ADM");
+            verify(counters).next(eq(TENANT), eq("admission_number"), eq(LocalDate.now().getYear()), any());
+
+            when(configRepository.findByTenantIdAndFormatKey(TENANT, "exam_code"))
+                    .thenReturn(Optional.of(config("EX", "-", false, "SEQUENTIAL", 5, 3)));
+            generator.next(TENANT, "EXAM");
+            verify(counters).next(eq(TENANT), eq("exam_code"), eq(IdCounterService.NO_YEAR), any());
+        }
+
+        @Test
+        @DisplayName("skips a number that is already used")
+        void skipsUsedNumber() {
+            String year = String.valueOf(LocalDate.now().getYear());
+            when(configRepository.findByTenantIdAndFormatKey(TENANT, "offer_code"))
+                    .thenReturn(Optional.of(config("OFR", "-", true, "SEQUENTIAL", 4, 0)));
+            when(counters.next(eq(TENANT), eq("offer_code"), anyInt(), any())).thenReturn(7L, 8L);
+            when(counters.isIssued("AdmissionOffer", "offerCode", true, TENANT, "OFR-" + year + "-0007")).thenReturn(true);
+
+            assertThat(generator.next(TENANT, "OFFER")).isEqualTo("OFR-" + year + "-0008");
+        }
+
+        @Test
+        @DisplayName("a new counter starts after the highest number already issued with the same prefix")
+        void seedsFromIssued() {
+            String start = "APP-" + LocalDate.now().getYear() + "-";
+            when(configRepository.findByTenantIdAndFormatKey(TENANT, "application_number"))
+                    .thenReturn(Optional.of(config("APP", "-", true, "SEQUENTIAL", 5, 0)));
+            when(counters.highestIssued("AdmissionEnquiry", "applicationNumber", true, TENANT, start)).thenReturn(41L);
+            when(counters.next(eq(TENANT), eq("application_number"), anyInt(), any())).thenAnswer(inv ->
+                    ((java.util.function.LongSupplier) inv.getArgument(3)).getAsLong() + 1);
+
+            assertThat(generator.generateApplicationNumber(TENANT)).isEqualTo(start + "00042");
         }
     }
 }
