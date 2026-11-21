@@ -3,6 +3,9 @@ package com.kvs.admission.service;
 import com.kvs.admission.dto.ArchivedLeadTrendResponse;
 import com.kvs.admission.dto.MeritListEntryResponse;
 import com.kvs.admission.dto.MeritListResponse;
+import com.kvs.admission.service.MeritListPdfWriter;
+import com.kvs.core.pdf.SchoolLetterhead;
+import com.kvs.core.school.SchoolProfile;
 import com.kvs.admission.entity.ApplicantDocument;
 import com.kvs.admission.entity.ArchivedLeadSnapshot;
 import com.kvs.admission.entity.CounselingCall;
@@ -87,26 +90,34 @@ class AdmissionRulesUnitTest {
         @Test
         @DisplayName("Names are masked unless full names are requested")
         void masksNames() throws Exception {
-            assertThat(MeritListPdfRenderer.maskName("Aarav Sharma")).isEqualTo("Aarav S.");
-            assertThat(MeritListPdfRenderer.maskName("Ananya Lakshmi Iyer")).isEqualTo("Ananya I.");
-            assertThat(MeritListPdfRenderer.maskName("Madonna")).isEqualTo("Madonna");
+            assertThat(MeritListPdfWriter.maskName("Aarav Sharma")).isEqualTo("Aarav S.");
+            assertThat(MeritListPdfWriter.maskName("Ananya Lakshmi Iyer")).isEqualTo("Ananya I.");
+            assertThat(MeritListPdfWriter.maskName("Madonna")).isEqualTo("Madonna");
 
-            String masked = text(MeritListPdfRenderer.render(list(1), false));
-            assertThat(masked).contains("Aarav S.").doesNotContain("Aarav Sharma").contains("Weights: entrance test 70%, interview 30%");
-            assertThat(text(MeritListPdfRenderer.render(list(1), true))).contains("Aarav Sharma");
+            String masked = text(render(list(1), false));
+            assertThat(masked).contains("Aarav S.").doesNotContain("Aarav Sharma").contains("Weights: entrance test 70%, interview 30%")
+                    .contains("Delhi Public School").contains("MERIT LIST");
+            assertThat(text(render(list(1), true))).contains("Aarav Sharma");
         }
 
         @Test
         @DisplayName("Long lists paginate and non-WinAnsi characters do not break rendering")
         void paginates() throws Exception {
-            MeritListResponse big = list(MeritListPdfRenderer.ROWS_PER_PAGE + 5);
+            MeritListResponse big = list(80);
             big.getEntries().get(0).setCandidateName("आरव Sharma");
-            byte[] pdf = MeritListPdfRenderer.render(big, true);
+            byte[] pdf = render(big, true);
             assertThat(new String(pdf, 0, 5)).isEqualTo("%PDF-");
             try (PDDocument doc = Loader.loadPDF(pdf)) {
-                assertThat(doc.getNumberOfPages()).isEqualTo(2);
+                assertThat(doc.getNumberOfPages()).isGreaterThan(2);
             }
-            assertThat(text(pdf)).contains("Page 2 of 2").contains("Under review");
+            assertThat(text(pdf)).contains("(continued)").contains("Under review");
+        }
+
+        /** The writer on a school profile, generated at a fixed instant */
+        private byte[] render(MeritListResponse list, boolean fullNames) {
+            SchoolLetterhead school = SchoolLetterhead.from(new SchoolProfile("Delhi Public School", "North Campus",
+                    "Sector 4, Rohini, New Delhi - 110085", "+911127000000", "office@dps.example", "", "", null));
+            return new MeritListPdfWriter().write(school, list, fullNames, java.time.Instant.parse("2026-11-20T04:30:00Z"));
         }
 
         private String text(byte[] pdf) throws Exception {

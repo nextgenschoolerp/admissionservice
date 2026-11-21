@@ -15,9 +15,13 @@ import com.kvs.admission.repo.EntranceEvaluationRepository;
 import com.kvs.admission.repo.MeritListRepository;
 import com.kvs.core.exception.BadRequestException;
 import com.kvs.core.exception.ResourceNotFoundException;
+import com.kvs.core.pdf.SchoolLetterhead;
+import com.kvs.core.school.SchoolProfile;
+import com.kvs.core.school.SchoolProfileClient;
 import com.kvs.core.util.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +57,15 @@ public class MeritListService {
 
     @Autowired
     private ConfigurableIdGenerator idGenerator;
+
+    @Autowired
+    private SchoolProfileClient schoolProfiles;
+
+    @Autowired
+    private MeritListPdfWriter pdfWriter;
+
+    @Value("${kvs.school.name:School}")
+    private String schoolName;
 
     /**
      * Ranks every evaluated candidate of a grade/academic year by weighted score and stores the merit list.
@@ -193,7 +206,8 @@ public class MeritListService {
     @Transactional
     public PdfExport exportPdf(UUID meritListId, boolean fullNames) {
         MeritListResponse list = getMeritList(meritListId);
-        byte[] pdf = MeritListPdfRenderer.render(list, fullNames);
+        SchoolProfile profile = schoolProfiles.getOr(list.getTenantId(), SchoolProfile.named(schoolName));
+        byte[] pdf = pdfWriter.write(SchoolLetterhead.from(profile), list, fullNames);
         auditService.logSuccess("merit_list:" + list.getTenantId(), "EXPORT_MERIT_LIST_PDF",
                 "Exported " + list.getMeritListCode() + " (" + list.getEntries().size() + " candidates, "
                         + (fullNames ? "full names" : "masked names") + ", " + pdf.length + " bytes)");
