@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -49,6 +50,21 @@ public class MeritListController {
         MeritListResponse response = meritListService.generateMeritList(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Merit list generated successfully", response));
+    }
+
+    /**
+     * List the merit lists of a campus, newest first.
+     *
+     * @param tenantId the school
+     * @param branchId the campus
+     * @return 200 OK with the merit lists
+     */
+    @GetMapping
+    @PreAuthorize(AdmissionPerms.MERIT_LISTS_VIEW)
+    public ResponseEntity<ApiResponse<List<MeritListResponse>>> listMeritLists(@RequestParam("tenantId") String tenantId,
+                                                                               @RequestParam("branchId") String branchId) {
+        log.info("Request to list merit lists for tenant: {}, branch: {}", tenantId, branchId);
+        return ResponseEntity.ok(ApiResponse.success(meritListService.listMeritLists(tenantId, branchId)));
     }
 
     /**

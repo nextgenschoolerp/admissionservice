@@ -49,6 +49,9 @@ public class AdmissionFeeDepositService {
     @Autowired
     private FeeWaiverService feeWaiverService;
 
+    @Autowired
+    private ConfigurableIdGenerator idGenerator;
+
     /**
      * Records the seat reservation deposit for a dispatched, still-valid offer, accepts the offer
      * and returns the digital receipt. The amount must equal the offer's initial fee; non-cash
@@ -102,7 +105,7 @@ public class AdmissionFeeDepositService {
         deposit.setTenantId(offer.getTenantId());
         deposit.setOfferId(offer.getOfferId());
         deposit.setEnquiryId(offer.getEnquiryId());
-        deposit.setReceiptNumber(ReferenceNumberGenerator.next("RCPT"));
+        deposit.setReceiptNumber(idGenerator.next(offer.getTenantId(), "RCPT"));
         deposit.setAmountPaid(request.getAmountPaid());
         deposit.setCurrency(offer.getCurrency());
         deposit.setPaymentMode(request.getPaymentMode());

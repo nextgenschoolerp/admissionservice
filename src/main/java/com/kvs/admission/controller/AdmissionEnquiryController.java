@@ -84,6 +84,15 @@ public class AdmissionEnquiryController {
         return ResponseEntity.ok(ApiResponse.success("Application closed as " + request.getDecision(), response));
     }
 
+    /** Count of the campus's open applications, for dashboards: { open }. Same readers as the list below. */
+    @GetMapping("/summary")
+    @PreAuthorize(AdmissionPerms.ENQUIRIES_VIEW)
+    public ResponseEntity<ApiResponse<java.util.Map<String, Long>>> enquirySummary(
+            @RequestParam("tenantId") String tenantId,
+            @RequestParam("branchId") String branchId) {
+        return ResponseEntity.ok(ApiResponse.success(admissionEnquiryService.enquirySummary(tenantId, branchId)));
+    }
+
     // Read by every stakeholder who moves an application forward (registrar, evaluator, cashier, principal)
     @GetMapping
     @PreAuthorize(AdmissionPerms.ENQUIRIES_VIEW)

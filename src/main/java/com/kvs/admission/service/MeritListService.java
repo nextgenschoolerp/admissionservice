@@ -15,9 +15,13 @@ import com.kvs.admission.repo.EntranceEvaluationRepository;
 import com.kvs.admission.repo.MeritListRepository;
 import com.kvs.core.exception.BadRequestException;
 import com.kvs.core.exception.ResourceNotFoundException;
+import com.kvs.core.pdf.SchoolLetterhead;
+import com.kvs.core.school.SchoolProfile;
+import com.kvs.core.school.SchoolProfileClient;
 import com.kvs.core.util.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +54,18 @@ public class MeritListService {
 
     @Autowired
     private AdmissionAuditService auditService;
+
+    @Autowired
+    private ConfigurableIdGenerator idGenerator;
+
+    @Autowired
+    private SchoolProfileClient schoolProfiles;
+
+    @Autowired
+    private MeritListPdfWriter pdfWriter;
+
+    @Value("${kvs.school.name:School}")
+    private String schoolName;
 
     /**
      * Ranks every evaluated candidate of a grade/academic year by weighted score and stores the merit list.
@@ -112,7 +128,7 @@ public class MeritListService {
                 MeritRankingCalculator.rank(candidates, entranceWeight, interviewWeight);
 
         MeritList meritList = new MeritList();
-        meritList.setMeritListCode(ReferenceNumberGenerator.next("MERIT"));
+        meritList.setMeritListCode(idGenerator.next(request.getTenantId(), "MERIT"));
         meritList.setTenantId(request.getTenantId());
         meritList.setBranchId(request.getBranchId());
         meritList.setAcademicYearId(request.getAcademicYearId());
@@ -165,6 +181,21 @@ public class MeritListService {
     }
 
     /**
+     * Lists the merit lists of a campus, newest first.
+     *
+     * @param tenantId the school
+     * @param branchId the campus
+     * @return the merit lists with their entries
+     */
+    @Transactional(readOnly = true)
+    public List<MeritListResponse> listMeritLists(String tenantId, String branchId) {
+        log.info("Listing merit lists for tenant: {}, branch: {}", tenantId, branchId);
+        return meritListRepository.findByTenantIdAndBranchIdOrderByCreatedAtDesc(tenantId, branchId).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    /**
      * Renders a merit list as a noticeboard PDF and records the export in the audit trail.
      * US-02012, US-02032, US-02052, US-02072, US-02092: Export merit list rankings to PDF for public noticeboard display
      *
@@ -175,7 +206,8 @@ public class MeritListService {
     @Transactional
     public PdfExport exportPdf(UUID meritListId, boolean fullNames) {
         MeritListResponse list = getMeritList(meritListId);
-        byte[] pdf = MeritListPdfRenderer.render(list, fullNames);
+        SchoolProfile profile = schoolProfiles.getOr(list.getTenantId(), SchoolProfile.named(schoolName));
+        byte[] pdf = pdfWriter.write(SchoolLetterhead.from(profile), list, fullNames);
         auditService.logSuccess("merit_list:" + list.getTenantId(), "EXPORT_MERIT_LIST_PDF",
                 "Exported " + list.getMeritListCode() + " (" + list.getEntries().size() + " candidates, "
                         + (fullNames ? "full names" : "masked names") + ", " + pdf.length + " bytes)");

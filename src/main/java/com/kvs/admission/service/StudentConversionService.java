@@ -55,6 +55,9 @@ public class StudentConversionService {
     @Autowired
     private AdmissionAccessGuard accessGuard;
 
+    @Autowired
+    private ConfigurableIdGenerator idGenerator;
+
     /**
      * Converts a verified lead into an active Student Master record and marks the enquiry ENROLLED.
      * Preconditions: the candidate passed evaluation, every mandatory document is VERIFIED, and if an
@@ -107,7 +110,7 @@ public class StudentConversionService {
         student.setTenantId(enquiry.getTenantId());
         student.setBranchId(enquiry.getBranchId());
         student.setEnquiryId(enquiryId);
-        student.setAdmissionNumber(ReferenceNumberGenerator.next("ADM"));
+        student.setAdmissionNumber(idGenerator.next(enquiry.getTenantId(), "ADM"));
         student.setFirstName(enquiry.getCandidateFirstName());
         student.setLastName(enquiry.getCandidateLastName());
         student.setDateOfBirth(dateOfBirth);

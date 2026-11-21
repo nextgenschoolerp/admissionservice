@@ -52,6 +52,9 @@ public class AdmissionEnquiryService {
     @Autowired
     private AdmissionAccessGuard accessGuard;
 
+    @Autowired
+    private ConfigurableIdGenerator idGenerator;
+
     /**
      * Captures a walk-in inquiry lead and persists it into the CRM database.
      * Generates a unique application number, validates for duplicate phone/email,
@@ -98,7 +101,7 @@ public class AdmissionEnquiryService {
                 });
 
         // Generate unique application number
-        String applicationNumber = generateApplicationNumber();
+        String applicationNumber = idGenerator.generateApplicationNumber(request.getTenantId());
 
         AdmissionEnquiry enquiry = new AdmissionEnquiry();
         enquiry.setTenantId(request.getTenantId());
@@ -197,6 +200,15 @@ public class AdmissionEnquiryService {
         return admissionEnquiryRepository.findByTenantIdAndBranchIdAndArchivedAtIsNull(tenantId, branchId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    /** Statuses of an application still in progress: not enrolled, not offered or withdrawn. */
+    private static final List<String> OPEN_STATUSES = List.of("NEW_INQUIRY", "CONTACTED", "EVALUATION_SCHEDULED", "EVALUATION_PASSED", "OFFER_ISSUED");
+
+    /** How many applications of a campus are still open (not archived), for dashboards: { open }. */
+    public java.util.Map<String, Long> enquirySummary(String tenantId, String branchId) {
+        return java.util.Map.of("open",
+                admissionEnquiryRepository.countByTenantIdAndBranchIdAndEnquiryStatusInAndArchivedAtIsNull(tenantId, branchId, OPEN_STATUSES));
     }
 
     private String generateApplicationNumber() {

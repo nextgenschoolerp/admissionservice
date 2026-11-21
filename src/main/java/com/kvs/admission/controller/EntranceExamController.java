@@ -49,6 +49,21 @@ public class EntranceExamController {
     }
 
     /**
+     * List the entrance exams of a campus with their admit cards, newest exam date first.
+     *
+     * @param tenantId the school
+     * @param branchId the campus
+     * @return 200 OK with the exams
+     */
+    @GetMapping
+    @PreAuthorize(AdmissionPerms.ENTRANCE_EXAMS_VIEW)
+    public ResponseEntity<ApiResponse<List<EntranceExamResponse>>> listExams(@RequestParam("tenantId") String tenantId,
+                                                                             @RequestParam("branchId") String branchId) {
+        log.info("Request to list entrance exams for tenant: {}, branch: {}", tenantId, branchId);
+        return ResponseEntity.ok(ApiResponse.success(entranceExamService.listExams(tenantId, branchId)));
+    }
+
+    /**
      * Retrieve an entrance exam with its admit cards.
      *
      * @param examId the exam UUID

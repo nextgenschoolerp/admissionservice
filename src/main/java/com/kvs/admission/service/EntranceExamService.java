@@ -54,6 +54,9 @@ public class EntranceExamService {
     @Autowired
     private AdmissionAuditService auditService;
 
+    @Autowired
+    private ConfigurableIdGenerator idGenerator;
+
     /**
      * Schedules an entrance exam and generates one admit card per candidate.
      * Every candidate must belong to the same tenant, branch, academic year and grade as the exam,
@@ -98,7 +101,7 @@ public class EntranceExamService {
         EntranceExamSchedule exam = new EntranceExamSchedule();
         exam.setTenantId(request.getTenantId());
         exam.setBranchId(request.getBranchId());
-        exam.setExamCode(ReferenceNumberGenerator.next("EXAM"));
+        exam.setExamCode(idGenerator.next(request.getTenantId(), "EXAM"));
         exam.setExamTitle(request.getExamTitle());
         exam.setAcademicYearId(request.getAcademicYearId());
         exam.setTargetGradeId(request.getTargetGradeId());
@@ -120,7 +123,7 @@ public class EntranceExamService {
             card.setTenantId(request.getTenantId());
             card.setExamId(savedExam.getExamId());
             card.setEnquiryId(enquiryId);
-            card.setAdmitCardNumber(ReferenceNumberGenerator.next("ADMIT"));
+            card.setAdmitCardNumber(idGenerator.next(request.getTenantId(), "ADMIT"));
             card.setRollNumber(String.format("%s-%03d", savedExam.getExamCode(), sequence));
             card.setSeatNumber(String.format("S-%03d", sequence));
             card.setCandidateName(enquiry.getCandidateFirstName() + " " + enquiry.getCandidateLastName());
@@ -171,6 +174,24 @@ public class EntranceExamService {
         List<AdmitCard> cards = admitCardRepository.findByExamIdOrderByRollNumberAsc(examId);
         Map<UUID, AdmissionEnquiry> enquiries = loadEnquiries(cards);
         return cards.stream().map(card -> mapAdmitCard(card, exam, enquiries.get(card.getEnquiryId()))).toList();
+    }
+
+    /**
+     * Lists the entrance exams of a campus, latest first, each with its admit cards (for the admissions workspace).
+     *
+     * @param tenantId the school
+     * @param branchId the campus
+     * @return the exams, newest exam date first
+     */
+    @Transactional(readOnly = true)
+    public List<EntranceExamResponse> listExams(String tenantId, String branchId) {
+        log.info("Listing entrance exams for tenant: {}, branch: {}", tenantId, branchId);
+        return examScheduleRepository.findByTenantIdAndBranchIdOrderByExamStartAtDesc(tenantId, branchId).stream()
+                .map(exam -> {
+                    List<AdmitCard> cards = admitCardRepository.findByExamIdOrderByRollNumberAsc(exam.getExamId());
+                    return mapToResponse(exam, cards, loadEnquiries(cards));
+                })
+                .toList();
     }
 
     private void validateCandidate(AdmissionEnquiry enquiry, ScheduleEntranceExamRequest request) {

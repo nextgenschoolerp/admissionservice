@@ -4,6 +4,7 @@ import com.kvs.admission.entity.MeritList;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -11,6 +12,10 @@ public interface MeritListRepository extends JpaRepository<MeritList, Long> {
 
     @EntityGraph(attributePaths = "entries")
     Optional<MeritList> findByMeritListId(UUID meritListId);
+
+    /** Every merit list of a campus, newest first (admissions workspace → Merit lists). */
+    @EntityGraph(attributePaths = "entries")
+    List<MeritList> findByTenantIdAndBranchIdOrderByCreatedAtDesc(String tenantId, String branchId);
 
     /** Most recent merit list of a grade, used to prioritise the waitlist (US-02014). */
     @EntityGraph(attributePaths = "entries")
