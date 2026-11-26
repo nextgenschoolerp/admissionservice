@@ -1,4 +1,4 @@
-# Task Execution Record: Module 02 — Admission Management, Lead CRM & Student Recruitment Pipeline
+﻿# Task Execution Record: Module 02 — Admission Management, Lead CRM & Student Recruitment Pipeline
 
 Execution of the `BRD_API_Generate` skill for **Module 02** based on [`story/module2/School_ERP_Module_02_Admissions_CRM_1000.md`](../story/module2/School_ERP_Module_02_Admissions_CRM_1000.md) and [`module2.sql`](../story/module2/module2.sql).
 
@@ -138,7 +138,7 @@ Paths are under `/api/v1/admissions`. Roles are the `@PreAuthorize` of each endp
 
 ### UI mapping
 - [x] Vite proxy `/api/v1/admissions` → `http://localhost:8083/admissionservice` (`ADMISSION_SERVICE_URL`)
-- [x] Students → Admissions tab, Review application with **Next step** per stakeholder (log a call, schedule exam, record assessment, issue offer, collect deposit, enrol, not offered / withdrawn), document verify / reject, Add student (application with documents) — [`school_webapp/docs/admissionservice-api-mapping.md`](../school_webapp/docs/admissionservice-api-mapping.md)
+- [x] Students → Admissions tab, Review application with **Next step** per stakeholder (log a call, schedule exam, record assessment, issue offer, collect deposit, enrol, not offered / withdrawn), document verify / reject, Add student (application with documents) — [`school_webapp/docs/mapping/admissionservice-api-mapping.md`](../school_webapp/docs/mapping/admissionservice-api-mapping.md)
 - [x] Workflow runners: [`/dev/admission-workflow.html`](../school_webapp/dev/admission-workflow.html) (enquiry → enrolled, 14 steps) and [`/dev/student-lifecycle-workflow.html`](../school_webapp/dev/student-lifecycle-workflow.html) (enquiry → promotion, 15 steps)
 
 ### Step 8: API Wiki
