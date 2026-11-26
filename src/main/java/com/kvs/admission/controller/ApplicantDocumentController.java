@@ -9,8 +9,7 @@ import com.kvs.core.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -78,15 +77,10 @@ public class ApplicantDocumentController {
      */
     @GetMapping("/enquiries/{enquiryId}/documents/{documentId}/file")
     @PreAuthorize(AdmissionPerms.EVALUATION_RUBRICS_VIEW)
-    public ResponseEntity<byte[]> downloadDocument(
+    public ResponseEntity<Resource> downloadDocument(
             @PathVariable("enquiryId") UUID enquiryId,
             @PathVariable("documentId") UUID documentId) {
-        ApplicantDocumentService.VaultFile file = documentService.readFile(enquiryId, documentId);
-        MediaType type = file.contentType() != null ? MediaType.parseMediaType(file.contentType()) : MediaType.APPLICATION_OCTET_STREAM;
-        return ResponseEntity.ok()
-                .contentType(type)
-                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline().filename(file.fileName()).build().toString())
-                .body(file.bytes());
+        return documentService.documentFile(enquiryId, documentId);
     }
 
     /**

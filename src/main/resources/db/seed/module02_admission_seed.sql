@@ -249,13 +249,13 @@ CROSS JOIN merit_lists m
 WHERE m.merit_list_id = '5eed0002-000a-4000-8000-000000000001';
 
 -- ---------------------------------------------------------------------------------------------------
--- 5. US-02004 Document vault (files live under <vault>/<tenant>/<enquiryId>/<uuid>.<ext>)
+-- 5. US-02004 Document vault (keys in the shared file store: <tenant>/admission-docs/<enquiryId>/<uuid>.<ext>)
 -- ---------------------------------------------------------------------------------------------------
 INSERT INTO applicant_documents (document_id, tenant_id, enquiry_id, document_type, original_file_name, file_path, content_type,
                                  file_size_bytes, checksum_sha256, verification_status, uploaded_by, verified_by_user_id, verified_at,
                                  verification_notes, created_at, updated_at, created_by, updated_by, version)
 SELECT d.document_id::uuid, 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', d.enquiry_id::uuid, d.document_type, d.original_file_name,
-       'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/' || d.enquiry_id || '/' || d.document_id || d.ext,
+       'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/admission-docs/' || d.enquiry_id || '/' || d.document_id || d.ext,
        d.content_type, d.size_bytes, encode(sha256(convert_to('seed:' || d.document_id, 'UTF8')), 'hex'),
        d.status, 'kavya.evaluator@dps.edu.in', d.verified_by, d.verified_at::timestamptz, d.notes,
        d.created_at::timestamptz, COALESCE(d.verified_at, d.created_at)::timestamptz, 'kavya.evaluator@dps.edu.in', d.verified_by, 0

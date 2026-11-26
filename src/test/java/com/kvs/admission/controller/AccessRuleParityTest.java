@@ -36,7 +36,8 @@ class AccessRuleParityTest {
     private static final String RULES_PATH = "/api/v1/admissions/access-rules";
 
     /** Intended differences, reviewed: "METHOD path" → reason. Keep empty unless a change is deliberate. */
-    private static final Map<String, String> ALLOWED_DIFFERENCES = Map.of();
+    private static final Map<String, String> ALLOWED_DIFFERENCES = Map.of(
+            "GET /internal/v1/admissions/documents/{documentId}/storage", "Internal (26 Nov 2026): studentservice reads a verified document's store key on enrolment; the internal key, not a user token");
 
     @Autowired private MockMvc mockMvc;
     @Autowired private JwtTokenService jwtTokenService;

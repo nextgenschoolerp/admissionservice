@@ -45,7 +45,7 @@ public class ApplicantDocument extends BaseAuditEntity {
     @Column(name = "original_file_name", nullable = false, length = 255)
     private String originalFileName;
 
-    /** Vault-relative path of the stored file. */
+    /** Key of the stored file in the shared file store: {tenant}/admission-docs/{enquiryId}/{uuid}.{ext}. */
     @Column(name = "file_path", nullable = false, length = 500)
     private String filePath;
 

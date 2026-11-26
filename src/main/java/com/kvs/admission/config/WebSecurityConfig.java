@@ -52,6 +52,8 @@ public class WebSecurityConfig {
                                 "/actuator/health",
                                 "/actuator/health/**")
                         .permitAll()
+                        // service-to-service calls carry the internal key; the controller checks it
+                        .requestMatchers("/internal/v1/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

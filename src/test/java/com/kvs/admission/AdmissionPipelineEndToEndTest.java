@@ -57,7 +57,7 @@ class AdmissionPipelineEndToEndTest {
 
     @DynamicPropertySource
     static void vaultProperties(DynamicPropertyRegistry registry) {
-        registry.add("admission.document-vault.base-path", VAULT_DIR::toString);
+        registry.add("kvs.storage.local.base-path", VAULT_DIR::toString);
     }
 
     @Autowired
@@ -355,7 +355,7 @@ class AdmissionPipelineEndToEndTest {
     }
 
     private String token(String email, String role) {
-        return "Bearer " + jwtTokenService.generateToken(email, Map.of("roles", List.of("ROLE_" + role)));
+        return "Bearer " + jwtTokenService.generateToken(email, Map.of("roles", List.of("ROLE_" + role), "tenantId", tenantId));
     }
 
     private <T> T read(MvcResult result, String path) throws Exception {

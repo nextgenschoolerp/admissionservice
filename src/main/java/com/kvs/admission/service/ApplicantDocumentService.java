@@ -12,13 +12,19 @@ import com.kvs.admission.repo.ApplicantDocumentRepository;
 import com.kvs.core.exception.BadRequestException;
 import com.kvs.core.exception.ConflictException;
 import com.kvs.core.exception.ResourceNotFoundException;
+import com.kvs.core.rbac.ScopeGuard;
+import com.kvs.core.storage.FileResponses;
+import com.kvs.core.storage.FileUploads;
+import com.kvs.core.storage.StoredFile;
+import com.kvs.core.storage.StoredFiles;
+import com.kvs.core.storage.UploadPolicy;
 import com.kvs.core.util.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,6 +38,8 @@ import java.util.UUID;
  * Covers user story:
  * US-02004: Upload mandatory birth certificates and transfer records to the document vault
  * Actor: Entrance Exam Evaluator
+ * <p>
+ * Files are kept in the shared file store (ms-core {@link FileUploads}, area {@code admission-docs}).
  */
 @Service
 @Slf4j
@@ -49,7 +57,10 @@ public class ApplicantDocumentService {
     private AdmissionEnquiryRepository admissionEnquiryRepository;
 
     @Autowired
-    private DocumentVaultStorage vaultStorage;
+    private FileUploads fileUploads;
+
+    @Autowired
+    private ScopeGuard scopeGuard;
 
     @Autowired
     private AdmissionAuditService auditService;
@@ -79,7 +90,7 @@ public class ApplicantDocumentService {
             throw new ConflictException("A verified " + documentType + " already exists for enquiry "
                     + enquiry.getApplicationNumber());
         }
-        String supersededPath = document != null ? document.getFilePath() : null;
+        String supersededKey = document != null ? document.getFilePath() : null;
         if (document == null) {
             document = new ApplicantDocument();
             document.setTenantId(enquiry.getTenantId());
@@ -87,14 +98,18 @@ public class ApplicantDocumentService {
             document.setDocumentType(documentType);
         }
 
-        DocumentVaultStorage.StoredFile stored = vaultStorage.store(enquiry.getTenantId(), enquiryId, file);
-        registerFileCleanup(stored.relativePath(), supersededPath);
+        // FileUploads removes the new file again if this transaction rolls back
+        StoredFile stored = fileUploads.save(enquiry.getTenantId(), UploadPolicy.ADMISSION_DOCUMENT, enquiryId, file);
+        if (supersededKey != null) {
+            // the replaced file goes once the new record is committed
+            StoredFiles.deleteAfterCommit(fileUploads.store(), supersededKey);
+        }
 
-        document.setOriginalFileName(sanitizeFileName(file.getOriginalFilename()));
-        document.setFilePath(stored.relativePath());
-        document.setContentType(file.getContentType());
-        document.setFileSizeBytes(file.getSize());
-        document.setChecksumSha256(stored.checksumSha256());
+        document.setOriginalFileName(stored.fileName());
+        document.setFilePath(stored.key());
+        document.setContentType(stored.contentType());
+        document.setFileSizeBytes(stored.sizeBytes());
+        document.setChecksumSha256(stored.sha256());
         document.setVerificationStatus(DocumentVerificationStatus.PENDING);
         document.setUploadedBy(SecurityUtils.getCurrentUserEmail().orElse("entrance_exam_evaluator"));
         document.setVerifiedByUserId(null);
@@ -104,7 +119,7 @@ public class ApplicantDocumentService {
 
         log.info("Stored {} {} for application {}", documentType, saved.getDocumentId(), enquiry.getApplicationNumber());
         auditService.logSuccess("applicant_document:" + enquiry.getTenantId(), "UPLOAD_APPLICANT_DOCUMENT",
-                (supersededPath != null ? "Replaced " : "Uploaded ") + documentType
+                (supersededKey != null ? "Replaced " : "Uploaded ") + documentType
                         + " for application " + enquiry.getApplicationNumber()
                         + " | Document: " + saved.getDocumentId()
                         + " | Size: " + saved.getFileSizeBytes() + " bytes"
@@ -113,22 +128,22 @@ public class ApplicantDocumentService {
         return mapToResponse(saved, enquiry);
     }
 
-    /** A stored document's file, ready to download. */
-    public record VaultFile(String fileName, String contentType, byte[] bytes) {}
-
     /**
-     * Reads one document's file from the vault, so it can be copied to a student profile on enrolment.
+     * One document's file, for viewing or for copying to the student profile on enrolment.
+     * Sent with the shared download headers (no-store, nosniff); PDF and images show in the browser.
      *
-     * @param enquiryId the enquiry the document belongs to
+     * @param enquiryId  the enquiry the document belongs to
      * @param documentId the document UUID
-     * @return the file name, content type and bytes
+     * @return the file
      */
     @Transactional(readOnly = true)
-    public VaultFile readFile(UUID enquiryId, UUID documentId) {
-        ApplicantDocument document = documentRepository.findByDocumentId(documentId)
-                .filter(d -> enquiryId.equals(d.getEnquiryId()))
-                .orElseThrow(() -> new ResourceNotFoundException("ApplicantDocument", "documentId", documentId));
-        return new VaultFile(document.getOriginalFileName(), document.getContentType(), vaultStorage.read(document.getFilePath()));
+    public ResponseEntity<Resource> documentFile(UUID enquiryId, UUID documentId) {
+        ApplicantDocument document = loadDocument(documentId);
+        if (!enquiryId.equals(document.getEnquiryId())) {
+            throw new ResourceNotFoundException("ApplicantDocument", "documentId", documentId);
+        }
+        return FileResponses.inline(fileUploads.store(), document.getFilePath(), document.getContentType(),
+                document.getOriginalFileName());
     }
 
     /**
@@ -156,8 +171,7 @@ public class ApplicantDocumentService {
     @Transactional
     public ApplicantDocumentResponse verifyDocument(UUID documentId, VerifyDocumentRequest request) {
         log.info("Verifying document {} as {}", documentId, request.getVerificationStatus());
-        ApplicantDocument document = documentRepository.findByDocumentId(documentId)
-                .orElseThrow(() -> new ResourceNotFoundException("ApplicantDocument", "documentId", documentId));
+        ApplicantDocument document = loadDocument(documentId);
 
         DocumentVerificationStatus decision = request.getVerificationStatus();
         if (decision == DocumentVerificationStatus.PENDING) {
@@ -185,39 +199,40 @@ public class ApplicantDocumentService {
         return mapToResponse(saved, enquiry);
     }
 
-    private AdmissionEnquiry findEnquiry(UUID enquiryId) {
-        return admissionEnquiryRepository.findByEnquiryId(enquiryId)
-                .orElseThrow(() -> new ResourceNotFoundException("AdmissionEnquiry", "enquiryId", enquiryId));
-    }
-
     /**
-     * Deletes the new file if the transaction rolls back, and the superseded file once it commits,
-     * so the vault never holds files without a matching record.
+     * Where a verified document's file is in the shared store, for studentservice to copy it on enrolment
+     * (GET /internal/v1/admissions/documents/{id}/storage). Only a VERIFIED document is released.
      */
-    private void registerFileCleanup(String newPath, String supersededPath) {
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            return;
+    @Transactional(readOnly = true)
+    public StorageInfo storageInfo(String tenantId, UUID documentId) {
+        ApplicantDocument document = documentRepository.findByDocumentId(documentId)
+                .filter(d -> tenantId.equals(d.getTenantId()))
+                .orElseThrow(() -> new ResourceNotFoundException("ApplicantDocument", "documentId", documentId));
+        if (document.getVerificationStatus() != DocumentVerificationStatus.VERIFIED) {
+            throw new ConflictException("Document " + documentId + " is not verified, so it cannot be copied");
         }
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCompletion(int status) {
-                if (status == STATUS_COMMITTED) {
-                    if (supersededPath != null) {
-                        vaultStorage.delete(supersededPath);
-                    }
-                } else {
-                    vaultStorage.delete(newPath);
-                }
-            }
-        });
+        return new StorageInfo(document.getFilePath(), document.getOriginalFileName(), document.getContentType(),
+                document.getFileSizeBytes(), document.getChecksumSha256(), document.getDocumentType().name());
     }
 
-    private String sanitizeFileName(String originalFileName) {
-        if (!StringUtils.hasText(originalFileName)) {
-            return "document";
-        }
-        String name = StringUtils.getFilename(originalFileName.replace('\\', '/'));
-        return name.length() > 255 ? name.substring(name.length() - 255) : name;
+    /** What the student profile needs to copy a verified document's file. */
+    public record StorageInfo(String storageKey, String fileName, String contentType, long sizeBytes, String sha256,
+                              String documentType) {
+    }
+
+    /** Loads a document; another school's document is reported as not found. */
+    private ApplicantDocument loadDocument(UUID documentId) {
+        ApplicantDocument document = documentRepository.findByDocumentId(documentId)
+                .orElseThrow(() -> new ResourceNotFoundException("ApplicantDocument", "documentId", documentId));
+        scopeGuard.requireTenantRecord(document.getTenantId(), "ApplicantDocument", "documentId", documentId);
+        return document;
+    }
+
+    private AdmissionEnquiry findEnquiry(UUID enquiryId) {
+        AdmissionEnquiry enquiry = admissionEnquiryRepository.findByEnquiryId(enquiryId)
+                .orElseThrow(() -> new ResourceNotFoundException("AdmissionEnquiry", "enquiryId", enquiryId));
+        scopeGuard.requireTenantRecord(enquiry.getTenantId(), "AdmissionEnquiry", "enquiryId", enquiryId);
+        return enquiry;
     }
 
     private ApplicantDocumentResponse mapToResponse(ApplicantDocument document, AdmissionEnquiry enquiry) {

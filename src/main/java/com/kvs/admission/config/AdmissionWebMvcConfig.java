@@ -9,7 +9,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * Custom WebMvc configuration for admissionservice.
- * Applies JwtTokenInterceptor to all endpoints; Swagger endpoints are excluded.
+ * Applies JwtTokenInterceptor to all endpoints; Swagger and the internal (service-to-service) endpoints are excluded.
  */
 @Configuration
 public class AdmissionWebMvcConfig implements WebMvcConfigurer {
@@ -28,7 +28,9 @@ public class AdmissionWebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
-                        "/swagger-ui.html"
+                        "/swagger-ui.html",
+                        // service-to-service calls carry the internal key, not a user token; the controller checks the key
+                        "/internal/v1/**"
                 );
     }
 }

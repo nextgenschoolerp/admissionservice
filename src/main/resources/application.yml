@@ -50,10 +50,6 @@ server:
     context-path: ${SERVER_CONTEXT_PATH:/admissionservice}
 
 admission:
-  # US-02004: applicant document vault (PDF/JPEG/PNG, max 5 MB)
-  document-vault:
-    base-path: ${DOCUMENT_VAULT_PATH:./document-vault}
-    max-file-size-bytes: 5242880
   # US-02006: base URL of the online fee payment page embedded in offer letters
   payment:
     link-base-url: ${PAYMENT_LINK_BASE_URL:https://pay.kvs.local/admissions/offers}
@@ -76,6 +72,20 @@ kvs:
     enabled: ${KVS_TENANCY_ENABLED:true}
     schema-map: ${KVS_TENANCY_SCHEMA_MAP:a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11=dpsdata,b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22=svmtdata,5eed0001-0000-4000-8000-000000000003=gmetdata}
     common-schema: ${KVS_TENANCY_COMMON_SCHEMA:common}
+  # Shared file store (ms-core FileUploads): applicant documents (PDF/JPEG/PNG, max 5 MB) live under admission-docs.
+  # Development: one folder for all services (../file-vault); type=s3 needs the KVS_STORAGE_* settings (see hrservice).
+  storage:
+    type: ${KVS_STORAGE_TYPE:local}
+    local:
+      base-path: ${KVS_STORAGE_PATH:../file-vault}
+    s3:
+      bucket: ${KVS_STORAGE_BUCKET:}
+      region: ${KVS_STORAGE_REGION:ap-south-1}
+      prefix: ${KVS_STORAGE_PREFIX:}
+      endpoint: ${KVS_STORAGE_ENDPOINT:}
+      path-style: ${KVS_STORAGE_PATH_STYLE:false}
+      encryption: ${KVS_STORAGE_ENCRYPTION:aws:kms}
+      kms-key-id: ${KVS_STORAGE_KMS_KEY_ID:}
   # Email goes through Settings → Integrations (authservice): this service's own mailbox, else the school's main email account.
   integrations:
     auth-url: ${AUTH_SERVICE_URL:http://localhost:8082/authservice}
